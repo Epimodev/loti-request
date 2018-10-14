@@ -1,0 +1,14 @@
+{
+  "extends": "tslint-config-airbnb",
+  "rules": {
+    "no-unused-variable": true,
+    "no-unused-expression": true,
+    "quotemark": [true, "single", "avoid-escape", "jsx-double"],
+    "ter-arrow-parens": [true, "as-needed"],
+    "function-name": false,
+    "variable-name": false,
+    "import-name": false,
+    "align": false,
+    "object-shorthand-properties-first": false
+  }
+}

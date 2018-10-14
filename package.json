@@ -1,0 +1,72 @@
+{
+  "name": "loti-request",
+  "version": "0.1.0",
+  "description": "React components to make http request declarative",
+  "author": "Frederic Godin",
+  "repository": "Epimodev/loti-request",
+  "license": "MIT",
+  "main": "module/index.js",
+  "module": "module/index.js",
+  "typings": "module/index.d.ts",
+  "keywords": [
+    "react",
+    "react-http",
+    "xhr",
+    "declarative",
+    "typescript"
+  ],
+  "files": [
+    "src",
+    "module"
+  ],
+  "scripts": {
+    "build": "rm -rf ./module && tsc",
+    "lint": "tslint -c tslint.json 'src/**/*.ts?(x)'",
+    "check-format": "prettier --list-different 'src/**/*.ts?(x)'",
+    "test": "jest",
+    "prepare": "yarn lint && yarn check-format && yarn build"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn lint && yarn check-format"
+    }
+  },
+  "dependencies": {
+    "query-string": "^6.1.0",
+    "shallow-equal": "^1.0.0",
+    "tslib": "^1.9.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^23.3.3",
+    "@types/query-string": "^6.1.0",
+    "@types/react": "^16.4.15",
+    "@types/react-test-renderer": "^16.0.3",
+    "husky": "^1.0.1",
+    "jest": "^23.6.0",
+    "prettier": "^1.14.3",
+    "react": "^16.5.2",
+    "react-test-renderer": "^16.5.2",
+    "ts-jest": "^23.10.3",
+    "tslint": "^5.11.0",
+    "tslint-config-airbnb": "^5.11.0",
+    "typescript": "^3.1.1"
+  },
+  "peer-dependencies": {
+    "react": "^16.0.0"
+  },
+  "jest": {
+    "verbose": true,
+    "testURL": "http://localhost/",
+    "transform": {
+      "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "((\\.|/)(test))\\.(ts)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "json",
+      "node"
+    ]
+  }
+}
