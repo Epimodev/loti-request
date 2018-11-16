@@ -9,8 +9,13 @@ function getRequest(params: FetchParams) {
   return request;
 }
 
+function getRequests() {
+  // return new array to avoid cache mutation from external modules
+  return [...requests];
+}
+
 function addRequest(request: XhrRequest<any>) {
-  requests.push(request);
+  requests.unshift(request);
   request.onAbort = () => removeRequest(request);
   return request;
 }
@@ -22,12 +27,26 @@ function removeRequest(request: XhrRequest<any>) {
   }
 }
 
+function removeRequests(url: string | RegExp) {
+  if (typeof url === 'string') {
+    requests = requests.filter(request => {
+      return request.params.url.indexOf(url) === -1;
+    });
+  } else {
+    requests = requests.filter(request => {
+      return !request.params.url.match(url);
+    });
+  }
+}
+
 function reset() {
   requests = [];
 }
 
 export default {
   getRequest,
+  getRequests,
   addRequest,
+  removeRequests,
   reset,
 };

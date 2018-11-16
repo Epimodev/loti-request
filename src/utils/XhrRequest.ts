@@ -34,11 +34,22 @@ function setHeaders(headers: { [key: string]: string } | undefined, xhr: XMLHttp
   }
 }
 
+function createRequestState(): RequestState<any> {
+  return {
+    status: 'NOT_SEND',
+    progress: {
+      loaded: 0,
+      total: 1,
+    },
+    withLoader: false,
+  };
+}
+
 class XhrRequest<T> {
   private xhr: XMLHttpRequest;
-  private params: FetchParams;
   private options: RequestOptions;
-  state: RequestState<T> = { status: 'NOT_SEND' };
+  params: FetchParams;
+  state: RequestState<T> = createRequestState();
   onStateChangeListeners: ((newState: RequestState<T>) => void)[] = [];
   onAbort?: () => void;
 
@@ -52,15 +63,18 @@ class XhrRequest<T> {
   fetch() {
     const { url, method = 'GET', headers, query, body } = this.params;
     const { loaderDelay = 0, withProgress = false, responseType = 'json' } = this.options;
-    const currentData = this.getCurrentData();
 
-    this.setRequestState({
-      status: 'LOADING',
-      timeoutReached: false,
-      loaded: 0,
-      total: 1,
-      data: currentData,
-    });
+    // if there isn't loader delay, we update request state once
+    if (!loaderDelay) {
+      this.setRequestState({ status: 'LOADING', withLoader: true });
+    } else {
+      this.setRequestState({ status: 'LOADING' });
+      setTimeout(() => {
+        if (this.state.status === 'LOADING') {
+          this.setRequestState({ withLoader: true });
+        }
+      }, loaderDelay);
+    }
 
     const urlToCall = query ? `${url}?${stringify(query)}` : url;
     this.xhr.responseType = responseType;
@@ -83,12 +97,6 @@ class XhrRequest<T> {
       };
     }
 
-    setTimeout(() => {
-      if (this.state.status === 'LOADING') {
-        this.setRequestState({ ...this.state, timeoutReached: true });
-      }
-    }, loaderDelay);
-
     this.xhr.open(method, urlToCall);
     setHeaders(headers, this.xhr);
     this.xhr.send(formatBody(body));
@@ -99,30 +107,27 @@ class XhrRequest<T> {
     this.fetch();
   }
 
-  private getCurrentData(): T | undefined {
-    if (this.state.status === 'SUCCESS' || this.state.status === 'LOADING') {
-      return this.state.data;
-    }
-    return undefined;
-  }
-
-  private setRequestState(newState: RequestState<T>) {
-    this.state = newState;
-    this.onStateChangeListeners.forEach(onStateChange => onStateChange(newState));
+  private setRequestState(newState: Partial<RequestState<T>>) {
+    this.state = { ...this.state, ...newState };
+    this.onStateChangeListeners.forEach(onStateChange => onStateChange(this.state));
   }
 
   private handleProgress(loaded: number, total: number) {
-    if (this.state.status === 'LOADING') {
-      this.setRequestState({ ...this.state, loaded, total });
-    }
+    const progress = { loaded, total };
+    this.setRequestState({ progress });
   }
 
   private handleSuccess(response: T) {
-    this.setRequestState({ status: 'SUCCESS', data: response });
+    this.setRequestState({
+      status: 'SUCCESS',
+      data: response,
+      withLoader: false,
+      error: undefined,
+    });
   }
 
   private handleError(error: any) {
-    this.setRequestState({ status: 'FAILED', error });
+    this.setRequestState({ status: 'FAILED', error, withLoader: false });
   }
 
   hasSameParams(params: FetchParams) {
@@ -146,13 +151,13 @@ class XhrRequest<T> {
       this.onStateChangeListeners.splice(callbackIndex, 1);
       if (this.onStateChangeListeners.length === 0 && this.state.status === 'LOADING') {
         this.xhr.abort();
-        this.setRequestState({ status: 'NOT_SEND' });
+        this.setRequestState({ status: 'NOT_SEND', withLoader: false });
         if (this.onAbort) {
           this.onAbort();
         }
       }
     } else {
-      console.warn('Error in removeStateListener `callback` not found');
+      console.warn('loti-request : Error in removeStateListener `callback` not found');
     }
   }
 }

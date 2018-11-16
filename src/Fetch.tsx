@@ -2,26 +2,28 @@ import { createElement, Component, ReactNode } from 'react';
 import XhrRequest from './utils/XhrRequest';
 import cache from './utils/cache';
 import { RequestContext } from './RequestProvider';
-import { FetchState, RequestState, FetchParams, RequestOptions } from './utils/types';
+import { FetchState, RequestState, FetchParams, RequestOptions, FetchPolicy } from './utils/types';
 
-interface ChildrenParams<T> {
-  requestState: FetchState<T>;
+interface ChildrenParams<T> extends FetchState<T> {
   refetch: () => void;
 }
 
-interface FetchProps<T> extends FetchParams, RequestOptions {
+interface FetchInContextProps<T> extends FetchParams, RequestOptions {
   children: (params: ChildrenParams<T>) => ReactNode;
+  fetchPolicy?: FetchPolicy;
   onSuccess?: (data: T) => void;
   onError?: (error: any) => void;
+}
+
+interface FetchProps<T> extends FetchParams, RequestOptions, FetchInContextProps<T> {
+  fetchPolicy: FetchPolicy;
 }
 
 interface Props<T> extends FetchProps<T> {
   contextHeaders: { [key: string]: string };
 }
 
-interface State<T> {
-  requestState: FetchState<T>;
-}
+interface State<T> extends FetchState<T> {}
 
 class Fetch<T = { [key: string]: any }> extends Component<Props<T>, State<T>> {
   request: XhrRequest<T>;
@@ -38,9 +40,7 @@ class Fetch<T = { [key: string]: any }> extends Component<Props<T>, State<T>> {
     }
     this.request.addStateListener(this.updateRequestState);
 
-    this.state = {
-      requestState: this.getInitialRequestState(),
-    };
+    this.state = this.getRequestState();
   }
 
   componentWillUnmount() {
@@ -59,40 +59,32 @@ class Fetch<T = { [key: string]: any }> extends Component<Props<T>, State<T>> {
       }
       this.request.addStateListener(this.updateRequestState);
 
-      if (this.request.state.status !== 'NOT_SEND') {
-        this.setState({
-          requestState: this.request.state,
-        });
-      }
+      this.setState(this.getRequestState());
     }
   }
 
-  getRequest() {
+  getRequest(): XhrRequest<T> {
+    const { fetchPolicy } = this.props;
     const fetchParams = this.getFetchParams();
     const requestOptions = this.getRequestOptions();
-    let request: XhrRequest<T>;
 
     const cachedRequest = cache.getRequest(fetchParams);
     if (cachedRequest) {
-      request = cachedRequest;
-    } else {
-      request = new XhrRequest(fetchParams, requestOptions);
-      cache.addRequest(request);
+      if (fetchPolicy === 'cache-first' || cachedRequest.state.status === 'LOADING') {
+        return cachedRequest;
+      }
     }
+
+    const request = new XhrRequest<T>(fetchParams, requestOptions);
+    cache.addRequest(request);
 
     return request;
   }
 
-  getInitialRequestState(): FetchState<T> {
-    if (this.request.state.status === 'NOT_SEND') {
-      return {
-        status: 'LOADING',
-        loaded: 0,
-        total: 1,
-        timeoutReached: false,
-      };
-    }
-    return this.request.state;
+  getRequestState(): FetchState<T> {
+    const requestState = this.request.state;
+    const status = requestState.status === 'NOT_SEND' ? 'LOADING' : requestState.status;
+    return { ...requestState, status };
   }
 
   getFetchParams(): FetchParams {
@@ -116,15 +108,15 @@ class Fetch<T = { [key: string]: any }> extends Component<Props<T>, State<T>> {
   }
 
   updateRequestState(requestState: RequestState<T>) {
-    if (requestState.status !== 'NOT_SEND') {
-      this.setState({ requestState });
+    const status = requestState.status === 'NOT_SEND' ? 'LOADING' : requestState.status;
 
-      const { onSuccess, onError } = this.props;
-      if (onSuccess && requestState.status === 'SUCCESS') {
-        onSuccess(requestState.data);
-      } else if (onError && requestState.status === 'FAILED') {
-        onError(requestState.error);
-      }
+    this.setState({ ...requestState, status });
+
+    const { onSuccess, onError } = this.props;
+    if (onSuccess && requestState.status === 'SUCCESS') {
+      onSuccess(requestState.data!);
+    } else if (onError && requestState.status === 'FAILED') {
+      onError(requestState.error);
     }
   }
 
@@ -134,16 +126,16 @@ class Fetch<T = { [key: string]: any }> extends Component<Props<T>, State<T>> {
 
   render() {
     return this.props.children({
-      requestState: this.state.requestState,
+      ...this.state,
       refetch: this.refetch,
     });
   }
 }
 
-function FetchInContext<T>(props: FetchProps<T>) {
+function FetchInContext<T>({ fetchPolicy = 'cache-first', ...props }: FetchInContextProps<T>) {
   return (
     <RequestContext.Consumer>
-      {headers => <Fetch<T> {...props} contextHeaders={headers} />}
+      {headers => <Fetch<T> fetchPolicy={fetchPolicy} {...props} contextHeaders={headers} />}
     </RequestContext.Consumer>
   );
 }

@@ -1,30 +1,23 @@
-type NotSend = {
-  status: 'NOT_SEND';
-};
-
-type Failed = {
-  status: 'FAILED';
-  error: any;
-};
-
-type Loading<T> = {
-  status: 'LOADING';
-  timeoutReached: boolean;
+interface RequestProgress {
   loaded: number;
   total: number;
+}
+
+interface RequestState<T> {
+  status: 'NOT_SEND' | 'LOADING' | 'SUCCESS' | 'FAILED';
+  withLoader: boolean;
+  progress: RequestProgress;
   data?: T;
-};
+  error?: object;
+}
 
-type Success<T> = {
-  status: 'SUCCESS';
-  data: T;
-};
-
-type FetchState<T> = Failed | Loading<T> | Success<T>;
-
-type RequestState<T> = NotSend | Failed | Loading<T> | Success<T>;
+interface FetchState<T> extends RequestState<T> {
+  status: 'LOADING' | 'SUCCESS' | 'FAILED';
+}
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+
+type FetchPolicy = 'cache-first' | 'network-only';
 
 type XhrBody =
   | string
@@ -53,4 +46,4 @@ interface RequestOptions {
   responseType?: 'arraybuffer' | 'blob' | 'document' | 'json' | 'text';
 }
 
-export { FetchState, RequestState, FetchParams, RequestOptions, XhrBody, HttpBody };
+export { FetchState, RequestState, FetchParams, RequestOptions, XhrBody, HttpBody, FetchPolicy };

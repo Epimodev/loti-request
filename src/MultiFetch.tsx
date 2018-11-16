@@ -2,10 +2,9 @@ import { createElement, Component, ReactNode } from 'react';
 import XhrRequest from './utils/XhrRequest';
 import cache from './utils/cache';
 import { RequestContext } from './RequestProvider';
-import { FetchState, RequestState, FetchParams, RequestOptions } from './utils/types';
+import { FetchState, FetchParams, RequestOptions } from './utils/types';
 
-interface ChildrenParams<T> {
-  requestState: RequestState<T>;
+interface ChildrenParams<T> extends FetchState<T> {
   refetch: () => void;
 }
 
@@ -135,25 +134,33 @@ class MultiFetch<T = { [key: string]: any }> extends Component<Props<T>, State<T
   getRequestsState(): FetchState<T> {
     const errors = this.getErrors();
     if (Object.keys(errors).length > 0) {
-      return { status: 'FAILED', error: errors };
+      return {
+        status: 'FAILED',
+        error: errors,
+        withLoader: false,
+        progress: { loaded: 0, total: 1 },
+      };
     }
 
     const loadingRequestStates = this.getLoadingRequestState();
     const loadingKeys = Object.keys(loadingRequestStates);
     if (loadingKeys.length > 0) {
-      // Each request has the same loader delay
-      // so we can take the `timeoutReach` of the first loading request
-      const timeoutReached = loadingRequestStates[loadingKeys[0]].timeoutReached;
+      const withLoader = loadingKeys.some(key => loadingRequestStates[key].withLoader);
+
       return {
         status: 'LOADING',
-        loaded: 0,
-        total: 1,
-        timeoutReached,
+        progress: { loaded: 0, total: 1 },
+        withLoader,
       };
     }
 
     const successData = this.getSuccessData();
-    return { status: 'SUCCESS', data: successData };
+    return {
+      status: 'SUCCESS',
+      data: successData,
+      withLoader: false,
+      progress: { loaded: 0, total: 1 },
+    };
   }
 
   getErrors(): { [key: string]: any } {
@@ -168,7 +175,7 @@ class MultiFetch<T = { [key: string]: any }> extends Component<Props<T>, State<T
     }, {});
   }
 
-  getLoadingRequestState(): { [key: string]: { status: 'LOADING'; timeoutReached: boolean } } {
+  getLoadingRequestState(): { [key: string]: { status: 'LOADING'; withLoader: boolean } } {
     return Object.keys(this.requests).reduce((acc, key) => {
       const request = this.requests[key];
 
@@ -198,7 +205,7 @@ class MultiFetch<T = { [key: string]: any }> extends Component<Props<T>, State<T
 
   render() {
     return this.props.children({
-      requestState: this.state.requestState,
+      ...this.state.requestState,
       refetch: this.refetch,
     });
   }

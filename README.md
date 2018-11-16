@@ -2,6 +2,7 @@
 A new component to make declarative request with react
 
 ## ⚠️ This library is under active development and API may change until version 1
+## ℹ️ API has change between version 0.1.0 and 0.2.0
 
 ## Install
 
@@ -21,10 +22,11 @@ Even if there are other librairies doing that I want to bring some new ideas abo
 - upload progress status
 
 ## Plan for futur
-- option to select fetch policy (use cache or not)
+- [x] option to select fetch policy (use cache or not)
 - add upload progress
-- possibility to use custom cache
-- improve MultiFetch component to make possible have requests with different response types.
+- create hooks for next version of react
+- ~~possibility to use custom cache~~
+- ~~improve MultiFetch component to make possible have requests with different response types~~
 
 ## Basic examples
 
@@ -37,14 +39,14 @@ import { Fetch } from 'loti-request';
 <Fetch
   url={`http://localhost:3000/posts/1`}
 >
-  {({ requestState }) => {
-    switch (requestState.status) {
+  {({ status, data }) => {
+    switch (status) {
       case 'LOADING':
         return 'Loading request';
       case 'FAILED':
         return 'Request failed';
       case 'SUCCESS':
-        return <div>Request SUCCESS 🎉 {requestState.data.title}</div>;
+        return <div>Request SUCCESS 🎉 {data.title}</div>;
     }
   }}
 </Fetch>
@@ -66,8 +68,8 @@ import { MultiFetch } from 'loti-request';
     },
   }}
 >
-  {({ requestState }) => {
-    switch (requestState.status) {
+  {({ status }) => {
+    switch (status) {
       case 'LOADING':
         return 'At least one request is loading';
       case 'FAILED':
@@ -93,12 +95,12 @@ import { Request } from 'loti-request';
   onSuccess={() => console.log('Submit Succeed')}
   onError={() => console.log('Submit Failed')}
 >
-  {({ requestState, fetch }) => (
+  {({ status, fetch }) => (
     <Fragment>
-      <button onClick={() => fetch()} disabled={requestState.status === 'LOADING'}>
-        {requestState.status === 'LOADING' ? 'Loading' : 'Submit'}
+      <button onClick={() => fetch()} disabled={status === 'LOADING'}>
+        {status === 'LOADING' ? 'Loading' : 'Submit'}
       </button>
-      {requestState.status === 'FAILED' && <span>'Submit Failed'</span>}
+      {status === 'FAILED' && <span>'Submit Failed'</span>}
     </Fragment>
   )}
 </Request>
@@ -165,21 +167,12 @@ callback when request failed, can be usefull to display an error message
 
 **children** `function (ChildrenParams): ReactNode`  
 params given by children function are :
+- **status** `'LOADING' | 'FAILED' | 'SUCCESS'`, request status.
+- **withLoader** `boolean`: true when request duration exceed `loaderDelay` prop
+- **progress** `{ loaded: number, total: number }`: quantity of bytes downloaded and total to download (works only when `withProgress` is true)
+- **data** `T | undefined` response data. `T` is a generic type depending on response type.
+- **error** `any` the error thrown by request if status isn't between 200 and 299 or a runtime error if response type doesn't corrspond with http response.
 - **refetch** `function (): void` a function to recall request. Can be usefull to retry a request or to reload data after a specific event.
-- **requestState**, which contain request status and data.
-
-When `requestState.status === 'LOADING'` requestState contain the following properties :
-  - **timeoutReached** `boolean`: true when request duration exceed `loaderDelay`
-  - **loaded** `number` quantity of bytes downloaded (works only when `withProgress` is true)
-  - **total** `number` quantity of bytes to download (works only when `withProgress` is true)
-  - **data** `T (available only when we use refetch)` data of previous response when we use `refetch`
-
-When `requestState.status === 'SUCCESS'` requestState contain the following property :
-  - **data** `T` response data. `T` is a generic type depending on response type.
-
-When `requestState.status === 'ERROR'` requestState contain the following property :
-  - **error** `any` the error thrown by request if status isn't between 200 and 299 or a runtime error if response type doesn't corrspond with http response.
-
 
 ### MultiFetch component
 Maybe you'll need to fetch several endpoints for a component. Instead to use several `Fetch` component, you can use `MultiFetch` which will work like `Fetch` component but enable the possibility to set several requests in props.
@@ -216,8 +209,12 @@ callback when request failed, can be usefull to display an error message
 
 **children** `function (ChildrenParams): ReactNode`  
 params available in children function are :
+- **status** `'LOADING' | 'FAILED' | 'SUCCESS'`, request status.
+- **withLoader** `boolean`: true when request duration exceed `loaderDelay` prop
+- **progress** `{ loaded: number, total: number }`: quantity of bytes downloaded and total to download (works only when `withProgress` is true)
+- **data** `T | undefined` response data. `T` is a generic type depending on response type.
+- **error** `any` the error thrown by request if status isn't between 200 and 299 or a runtime error if response type doesn't corrspond with http response.
 - **refetch** `function (): void` a function to recall request. Can be usefull to retry a request or to reload data after a specific event.
-- **requestState**, which contain request status and data.
 > the schema of `data` correspond with `requests` props schema. For example if in `requests` there is a request in key `post`, the response of this request will be in `data.post`.
 
 
@@ -275,18 +272,33 @@ Request url query.
 
 > params use in `fetch` are merge with props, so you can choose to set some params in component props like `method` and set other params like `body` or `query` in `fetch` call.
 
-- **requestState**, which contain request status and data.
+- **status** `'NOT_SEND', 'LOADING' | 'FAILED' | 'SUCCESS'`, request status.
+- **withLoader** `boolean`: true when request duration exceed `loaderDelay` prop
+- **progress** `{ loaded: number, total: number }`: quantity of bytes downloaded and total to download (works only when `withProgress` is true)
+- **data** `T | undefined` response data. `T` is a generic type depending on response type.
+- **error** `any` the error thrown by request if status isn't between 200 and 299 or a runtime error if response type doesn't corrspond with http response.
 
-When `requestState.status === 'NOT_SEND'` requestState doesn't contain other property.
 
-When `requestState.status === 'LOADING'` requestState contain the following properties :
-  - **timeoutReached** `boolean`: true when request duration exceed `loaderDelay`
-  - **loaded** `number` quantity of bytes downloaded (works only when `withProgress` is true)
-  - **total** `number` quantity of bytes to download (works only when `withProgress` is true)
-  - **data** `T (available only when we use refetch)` data of previous response when we use `refetch`
+### Cache functions
 
-When `requestState.status === 'SUCCESS'` requestState contain the following property :
-  - **data** `T` response data. `T` is a generic type depending on response type.
+Sometimes we need to clean cache after creation or update some data.
+You can use `removeCachedRequests` and `resetCache` to remove some request from cache.
 
-When `requestState.status === 'ERROR'` requestState contain the following property :
-  - **error** `any` the error thrown by request if status isn't between 200 and 299 or a runtime error if response type doesn't corrspond with http response.
+#### removeCachedRequests(url: string | RegExp) => void
+remove requests which have an url matching with param.
+##### Exemple :
+```js
+import { removeCachedRequests } from 'loti-request'
+
+// remove from cache all requests with a url finishing by `match/:id`
+removeCachedRequests(/match\/\d*$/)
+```
+
+#### resetCache() => void
+remove all requests from cache.
+##### Exemple :
+```js
+import { resetCache } from 'loti-request'
+
+resetCache()
+```

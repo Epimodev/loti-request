@@ -3,8 +3,7 @@ import XhrRequest from './utils/XhrRequest';
 import { RequestContext } from './RequestProvider';
 import { RequestState, FetchParams, RequestOptions } from './utils/types';
 
-interface ChildrenParams<T> {
-  requestState: RequestState<T>;
+interface ChildrenParams<T> extends RequestState<T> {
   fetch: (params?: Partial<FetchParams>) => void;
 }
 
@@ -18,9 +17,7 @@ interface Props<T> extends RequestProps<T> {
   contextHeaders: { [key: string]: string };
 }
 
-interface State<T> {
-  requestState: RequestState<T>;
-}
+interface State<T> extends RequestState<T> {}
 
 class Request<T> extends Component<Props<T>, State<T>> {
   request: XhrRequest<T> | null = null;
@@ -31,17 +28,15 @@ class Request<T> extends Component<Props<T>, State<T>> {
     this.updateRequestState = this.updateRequestState.bind(this);
     this.fetch = this.fetch.bind(this);
 
-    this.state = {
-      requestState: { status: 'NOT_SEND' },
-    };
+    this.state = { status: 'NOT_SEND', withLoader: false, progress: { loaded: 0, total: 1 } };
   }
 
   updateRequestState(requestState: RequestState<T>) {
-    this.setState({ requestState });
+    this.setState(requestState);
 
     const { onSuccess, onError } = this.props;
     if (onSuccess && requestState.status === 'SUCCESS') {
-      onSuccess(requestState.data);
+      onSuccess(requestState.data!);
     } else if (onError && requestState.status === 'FAILED') {
       onError(requestState.error);
     }
@@ -85,7 +80,7 @@ class Request<T> extends Component<Props<T>, State<T>> {
 
   render() {
     return this.props.children({
-      requestState: this.state.requestState,
+      ...this.state,
       fetch: this.fetch,
     });
   }
