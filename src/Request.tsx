@@ -31,6 +31,12 @@ class Request<T> extends Component<Props<T>, State<T>> {
     this.state = { status: 'NOT_SEND', withLoader: false, progress: { loaded: 0, total: 1 } };
   }
 
+  componentWillUnmount() {
+    if (this.request) {
+      this.request.removeStateListener(this.updateRequestState);
+    }
+  }
+
   updateRequestState(requestState: RequestState<T>) {
     this.setState(requestState);
 
