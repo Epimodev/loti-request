@@ -261,6 +261,36 @@ describe('Fetch', () => {
     });
   });
 
+  test('Don\'t abort request when abortOnUnmount is disabled', () => {
+    return new Promise(resolve => {
+      const loadingDuration = 100;
+      const unmountDelay = 20;
+      const xhrMock = createXhrMock({ duration: loadingDuration });
+      const xhrInstance = new xhrMock();
+      global.XMLHttpRequest = jest.fn(() => xhrInstance) as any;
+
+      const firstFetchElement = createElement(Fetch, {
+        url: 'http://fake-url.com',
+        fetchPolicy: 'cache-first' as FetchPolicy,
+        children: () => createElement('div'),
+        loaderDelay: 0,
+        withProgress: false,
+        abortOnUnmount: false,
+      });
+
+      const firstFetch = TestRenderer.create(firstFetchElement);
+
+      setTimeout(() => {
+        firstFetch.unmount();
+
+        expect(xhrInstance.open.mock.calls.length).toBe(1);
+        expect(xhrInstance.send.mock.calls.length).toBe(1);
+        expect(xhrInstance.abort.mock.calls.length).toBe(0);
+        resolve();
+      }, unmountDelay);
+    });
+  });
+
   test("Don't abort request when fetch is unmount and another fetch is mounted", () => {
     return new Promise(resolve => {
       const loadingDuration = 100;

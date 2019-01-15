@@ -70,6 +70,7 @@ class Fetch<T = { [key: string]: any }> extends Component<Props<T>, State<T>> {
 
     const cachedRequest = cache.getRequest(fetchParams);
     if (cachedRequest) {
+      cachedRequest.updateOptions(requestOptions);
       if (fetchPolicy === 'cache-first' || cachedRequest.state.status === 'LOADING') {
         return cachedRequest;
       }
@@ -100,10 +101,11 @@ class Fetch<T = { [key: string]: any }> extends Component<Props<T>, State<T>> {
   }
 
   getRequestOptions(): RequestOptions {
-    const { loaderDelay, withProgress } = this.props;
+    const { loaderDelay, withProgress, abortOnUnmount } = this.props;
     return {
       loaderDelay,
       withProgress,
+      abortOnUnmount,
     };
   }
 

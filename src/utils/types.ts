@@ -41,6 +41,7 @@ interface FetchParams {
 }
 
 interface RequestOptions {
+  abortOnUnmount?: boolean;
   loaderDelay?: number;
   withProgress?: boolean;
   responseType?: 'arraybuffer' | 'blob' | 'document' | 'json' | 'text';

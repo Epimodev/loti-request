@@ -145,11 +145,16 @@ class XhrRequest<T> {
   }
 
   removeStateListener(callback: (newState: RequestState<T>) => void) {
+    const { abortOnUnmount = true } = this.options;
     const callbackIndex = this.onStateChangeListeners.indexOf(callback);
 
     if (callbackIndex >= 0) {
       this.onStateChangeListeners.splice(callbackIndex, 1);
-      if (this.onStateChangeListeners.length === 0 && this.state.status === 'LOADING') {
+      if (
+        abortOnUnmount &&
+        this.onStateChangeListeners.length === 0 &&
+        this.state.status === 'LOADING'
+      ) {
         this.xhr.abort();
         this.setRequestState({ status: 'NOT_SEND', withLoader: false });
         if (this.onAbort) {
@@ -158,6 +163,13 @@ class XhrRequest<T> {
       }
     } else {
       console.warn('loti-request : Error in removeStateListener `callback` not found');
+    }
+  }
+
+  updateOptions(options: RequestOptions) {
+    // in case request is get from cache for a new component which has `abortOnUnmount` disabled
+    if (this.options.abortOnUnmount && !options.abortOnUnmount) {
+      this.options.abortOnUnmount = options.abortOnUnmount;
     }
   }
 }
