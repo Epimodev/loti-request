@@ -44,6 +44,16 @@ class Fetch<T = { [key: string]: any }> extends Component<Props<T>, State<T>> {
   }
 
   componentWillUnmount() {
+    const { onSuccess, onError, abortOnUnmount } = this.props;
+    if (this.request.state.status === 'LOADING' && !abortOnUnmount) {
+      if (onSuccess) {
+        this.request.addSuccessCallbacks(onSuccess);
+      }
+      if (onError) {
+        this.request.addErrorCallbacks(onError);
+      }
+    }
+
     this.request.removeStateListener(this.updateRequestState);
   }
 

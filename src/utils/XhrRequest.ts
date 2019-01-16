@@ -48,9 +48,13 @@ function createRequestState(): RequestState<any> {
 class XhrRequest<T> {
   private xhr: XMLHttpRequest;
   private options: RequestOptions;
+  // each success callbacks is called only once (usefull to call after component unmount)
+  private onSuccessCallbacks: ((response: T) => void)[] = [];
+  // each error callbacks is called only once (usefull to call after component unmount)
+  private onErrorCallbacks: ((response: object) => void)[] = [];
+  private onStateChangeListeners: ((newState: RequestState<T>) => void)[] = [];
   params: FetchParams;
   state: RequestState<T> = createRequestState();
-  onStateChangeListeners: ((newState: RequestState<T>) => void)[] = [];
   onAbort?: () => void;
 
   constructor(fetchParams: FetchParams, requestOptions: RequestOptions) {
@@ -118,6 +122,10 @@ class XhrRequest<T> {
   }
 
   private handleSuccess(response: T) {
+    while (this.onSuccessCallbacks.length > 0) {
+      const successCallback = this.onSuccessCallbacks.shift();
+      successCallback!(response);
+    }
     this.setRequestState({
       status: 'SUCCESS',
       data: response,
@@ -127,6 +135,10 @@ class XhrRequest<T> {
   }
 
   private handleError(error: any) {
+    while (this.onErrorCallbacks.length > 0) {
+      const errorCallback = this.onErrorCallbacks.shift();
+      errorCallback!(error);
+    }
     this.setRequestState({ status: 'FAILED', error, withLoader: false });
   }
 
@@ -140,16 +152,24 @@ class XhrRequest<T> {
     );
   }
 
+  addSuccessCallbacks(callback: (response: T) => void) {
+    this.onSuccessCallbacks.push(callback);
+  }
+
+  addErrorCallbacks(callback: (response: object) => void) {
+    this.onErrorCallbacks.push(callback);
+  }
+
   addStateListener(callback: (newState: RequestState<T>) => void) {
     this.onStateChangeListeners.push(callback);
   }
 
   removeStateListener(callback: (newState: RequestState<T>) => void) {
     const { abortOnUnmount = true } = this.options;
-    const callbackIndex = this.onStateChangeListeners.indexOf(callback);
+    const listenerIndex = this.onStateChangeListeners.indexOf(callback);
 
-    if (callbackIndex >= 0) {
-      this.onStateChangeListeners.splice(callbackIndex, 1);
+    if (listenerIndex >= 0) {
+      this.onStateChangeListeners.splice(listenerIndex, 1);
       if (
         abortOnUnmount &&
         this.onStateChangeListeners.length === 0 &&

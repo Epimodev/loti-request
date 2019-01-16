@@ -327,4 +327,144 @@ describe('Fetch', () => {
       }, unmountDelay);
     });
   });
+
+  test('Call onSuccess', () => {
+    return new Promise(resolve => {
+      const xhrMock = createXhrMock({});
+      const xhrInstance = new xhrMock();
+      global.XMLHttpRequest = jest.fn(() => xhrInstance) as any;
+      const onSuccessMock = jest.fn();
+      const onErrorMock = jest.fn();
+
+      const fetchElement = createElement(Fetch, {
+        url: 'http://fake-url.com',
+        fetchPolicy: 'cache-first' as FetchPolicy,
+        children: () => createElement('div'),
+        loaderDelay: 0,
+        withProgress: false,
+        onSuccess: onSuccessMock,
+        onError: onErrorMock,
+      });
+
+      TestRenderer.create(fetchElement);
+
+      setTimeout(() => {
+        expect(xhrInstance.open.mock.calls.length).toBe(1);
+        expect(xhrInstance.send.mock.calls.length).toBe(1);
+        expect(onSuccessMock.mock.calls.length).toBe(1);
+        expect(onErrorMock.mock.calls.length).toBe(0);
+
+        resolve();
+      }, 20);
+    });
+  });
+
+  test('Call onError', () => {
+    return new Promise(resolve => {
+      const xhrMock = createXhrMock({ willFail: true });
+      const xhrInstance = new xhrMock();
+      global.XMLHttpRequest = jest.fn(() => xhrInstance) as any;
+      const onSuccessMock = jest.fn();
+      const onErrorMock = jest.fn();
+
+      const fetchElement = createElement(Fetch, {
+        url: 'http://fake-url.com',
+        fetchPolicy: 'cache-first' as FetchPolicy,
+        children: () => createElement('div'),
+        loaderDelay: 0,
+        withProgress: false,
+        onSuccess: onSuccessMock,
+        onError: onErrorMock,
+      });
+
+      TestRenderer.create(fetchElement);
+
+      setTimeout(() => {
+        expect(xhrInstance.open.mock.calls.length).toBe(1);
+        expect(xhrInstance.send.mock.calls.length).toBe(1);
+        expect(onSuccessMock.mock.calls.length).toBe(0);
+        expect(onErrorMock.mock.calls.length).toBe(1);
+
+        resolve();
+      }, 20);
+    });
+  });
+
+  test('Call onSuccess even after component unmount', () => {
+    return new Promise(resolve => {
+      const loadingDuration = 100;
+      const unmountDelay = 20;
+      const xhrMock = createXhrMock({ duration: loadingDuration });
+      const xhrInstance = new xhrMock();
+      global.XMLHttpRequest = jest.fn(() => xhrInstance) as any;
+      const onSuccessMock = jest.fn();
+      const onErrorMock = jest.fn();
+
+      const firstFetchElement = createElement(Fetch, {
+        url: 'http://fake-url.com',
+        fetchPolicy: 'cache-first' as FetchPolicy,
+        children: () => createElement('div'),
+        loaderDelay: 0,
+        withProgress: false,
+        abortOnUnmount: false,
+        onSuccess: onSuccessMock,
+        onError: onErrorMock,
+      });
+
+      const firstFetch = TestRenderer.create(firstFetchElement);
+
+      setTimeout(() => {
+        firstFetch.unmount();
+      }, unmountDelay);
+
+      setTimeout(() => {
+        expect(xhrInstance.open.mock.calls.length).toBe(1);
+        expect(xhrInstance.send.mock.calls.length).toBe(1);
+        expect(xhrInstance.abort.mock.calls.length).toBe(0);
+        expect(onSuccessMock.mock.calls.length).toBe(1);
+        expect(onErrorMock.mock.calls.length).toBe(0);
+
+        resolve();
+      }, loadingDuration + 20);
+    });
+  });
+
+  test('Call onError even after component unmount', () => {
+    return new Promise(resolve => {
+      const loadingDuration = 100;
+      const unmountDelay = 20;
+      const xhrMock = createXhrMock({ duration: loadingDuration, willFail: true });
+      const xhrInstance = new xhrMock();
+      global.XMLHttpRequest = jest.fn(() => xhrInstance) as any;
+      const onSuccessMock = jest.fn();
+      const onErrorMock = jest.fn();
+
+      const firstFetchElement = createElement(Fetch, {
+        url: 'http://fake-url.com',
+        fetchPolicy: 'cache-first' as FetchPolicy,
+        children: () => createElement('div'),
+        loaderDelay: 0,
+        withProgress: false,
+        abortOnUnmount: false,
+        onSuccess: onSuccessMock,
+        onError: onErrorMock,
+      });
+
+      const firstFetch = TestRenderer.create(firstFetchElement);
+
+      setTimeout(() => {
+        firstFetch.unmount();
+      }, unmountDelay);
+
+      setTimeout(() => {
+        expect(xhrInstance.open.mock.calls.length).toBe(1);
+        expect(xhrInstance.send.mock.calls.length).toBe(1);
+        expect(xhrInstance.abort.mock.calls.length).toBe(0);
+        expect(onSuccessMock.mock.calls.length).toBe(0);
+        expect(onErrorMock.mock.calls.length).toBe(1);
+
+        resolve();
+      }, loadingDuration + 20);
+    });
+  });
 });
