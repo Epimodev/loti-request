@@ -32,7 +32,7 @@ type XhrBody =
 
 type HttpBody = { [key: string]: any } | XhrBody;
 
-interface FetchParams {
+interface RequestParams {
   url: string;
   method?: HttpMethod;
   headers?: { [key: string]: string };
@@ -47,4 +47,4 @@ interface RequestOptions {
   responseType?: 'arraybuffer' | 'blob' | 'document' | 'json' | 'text';
 }
 
-export { FetchState, RequestState, FetchParams, RequestOptions, XhrBody, HttpBody, FetchPolicy };
+export { FetchState, RequestState, RequestParams, RequestOptions, XhrBody, HttpBody, FetchPolicy };

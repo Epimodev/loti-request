@@ -2,7 +2,7 @@ import { createElement, Component, ReactNode } from 'react';
 import XhrRequest from './utils/XhrRequest';
 import cache from './utils/cache';
 import { RequestContext } from './RequestProvider';
-import { FetchState, FetchParams, RequestOptions } from './utils/types';
+import { FetchState, RequestParams, RequestOptions } from './utils/types';
 
 interface ChildrenParams<T> extends FetchState<T> {
   refetch: () => void;
@@ -10,7 +10,7 @@ interface ChildrenParams<T> extends FetchState<T> {
 
 interface MultiFetchProps<T> extends RequestOptions {
   children: (params: ChildrenParams<T>) => ReactNode;
-  requests: { [key: string]: FetchParams };
+  requests: { [key: string]: RequestParams };
   onSuccess?: (data: T) => void;
   onError?: (error: any) => void;
 }
@@ -87,7 +87,7 @@ class MultiFetch<T = { [key: string]: any }> extends Component<Props<T>, State<T
     return requests;
   }
 
-  getRequest(params: FetchParams): XhrRequest<T> {
+  getRequest(params: RequestParams): XhrRequest<T> {
     const { contextHeaders } = this.props;
     // Append headers of RequestProvider
     const fetchParams = {

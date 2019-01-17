@@ -1,16 +1,16 @@
 import { createElement, Component, ReactNode } from 'react';
 import XhrRequest from './utils/XhrRequest';
 import { RequestContext } from './RequestProvider';
-import { RequestState, FetchParams, RequestOptions } from './utils/types';
+import { RequestState, RequestParams, RequestOptions } from './utils/types';
 
 interface ChildrenParams<T> extends RequestState<T> {
-  fetch: (params?: Partial<FetchParams>) => void;
+  fetch: (params?: Partial<RequestParams>) => void;
 }
 
-interface RequestProps<T> extends Partial<FetchParams>, RequestOptions {
+interface RequestProps<T> extends Partial<RequestParams>, RequestOptions {
   children: (params: ChildrenParams<T>) => ReactNode;
-  onSuccess?: (data: T) => void;
-  onError?: (error: any) => void;
+  onSuccess?: (data: T, params: RequestParams) => void;
+  onError?: (error: any, params: RequestParams) => void;
 }
 
 interface Props<T> extends RequestProps<T> {
@@ -52,13 +52,13 @@ class Request<T> extends Component<Props<T>, State<T>> {
 
     const { onSuccess, onError } = this.props;
     if (onSuccess && requestState.status === 'SUCCESS') {
-      onSuccess(requestState.data!);
+      onSuccess(requestState.data!, this.request!.params);
     } else if (onError && requestState.status === 'FAILED') {
-      onError(requestState.error);
+      onError(requestState.error, this.request!.params);
     }
   }
 
-  getFetchParams(params?: Partial<FetchParams>): FetchParams {
+  getFetchParams(params?: Partial<RequestParams>): RequestParams {
     const { url, method, headers, query, body, contextHeaders } = this.props;
     if (url || (params && params.url)) {
       const paramsHeader = params ? params.headers : undefined;
@@ -76,14 +76,15 @@ class Request<T> extends Component<Props<T>, State<T>> {
   }
 
   getRequestOptions(): RequestOptions {
-    const { loaderDelay, withProgress } = this.props;
+    const { loaderDelay, withProgress, abortOnUnmount } = this.props;
     return {
       loaderDelay,
       withProgress,
+      abortOnUnmount,
     };
   }
 
-  fetch(params?: Partial<FetchParams>) {
+  fetch(params?: Partial<RequestParams>) {
     if (this.request) {
       this.request.removeStateListener(this.updateRequestState);
     }

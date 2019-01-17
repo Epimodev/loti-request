@@ -1,9 +1,9 @@
 import XhrRequest from './XhrRequest';
-import { FetchParams } from './types';
+import { RequestParams } from './types';
 
 let requests: XhrRequest<any>[] = [];
 
-function getRequest(params: FetchParams) {
+function getRequest(params: RequestParams) {
   const request = requests.find(currentRequest => currentRequest.hasSameParams(params));
 
   return request;

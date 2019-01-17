@@ -2,20 +2,26 @@ import { createElement, Component, ReactNode } from 'react';
 import XhrRequest from './utils/XhrRequest';
 import cache from './utils/cache';
 import { RequestContext } from './RequestProvider';
-import { FetchState, RequestState, FetchParams, RequestOptions, FetchPolicy } from './utils/types';
+import {
+  FetchState,
+  RequestState,
+  RequestParams,
+  RequestOptions,
+  FetchPolicy,
+} from './utils/types';
 
 interface ChildrenParams<T> extends FetchState<T> {
   refetch: () => void;
 }
 
-interface FetchInContextProps<T> extends FetchParams, RequestOptions {
+interface FetchInContextProps<T> extends RequestParams, RequestOptions {
   children: (params: ChildrenParams<T>) => ReactNode;
   fetchPolicy?: FetchPolicy;
-  onSuccess?: (data: T) => void;
-  onError?: (error: any) => void;
+  onSuccess?: (data: T, params: RequestParams) => void;
+  onError?: (error: any, params: RequestParams) => void;
 }
 
-interface FetchProps<T> extends FetchParams, RequestOptions, FetchInContextProps<T> {
+interface FetchProps<T> extends RequestParams, RequestOptions, FetchInContextProps<T> {
   fetchPolicy: FetchPolicy;
 }
 
@@ -98,7 +104,7 @@ class Fetch<T = { [key: string]: any }> extends Component<Props<T>, State<T>> {
     return { ...requestState, status };
   }
 
-  getFetchParams(): FetchParams {
+  getFetchParams(): RequestParams {
     const { url, method, headers, query, body, contextHeaders } = this.props;
 
     return {
@@ -126,9 +132,9 @@ class Fetch<T = { [key: string]: any }> extends Component<Props<T>, State<T>> {
 
     const { onSuccess, onError } = this.props;
     if (onSuccess && requestState.status === 'SUCCESS') {
-      onSuccess(requestState.data!);
+      onSuccess(requestState.data!, this.request.params);
     } else if (onError && requestState.status === 'FAILED') {
-      onError(requestState.error);
+      onError(requestState.error, this.request.params);
     }
   }
 
