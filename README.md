@@ -152,18 +152,24 @@ Request body.
 **loaderDelay** `(optional) number`  
 delay (in milliseconds) before children param `requestState.timeoutReached` become true when request is loading. Can be usefull if you want display a loader after a delay.
 
+**abortOnUnmount** `(optional, default true) boolean`  
+define if request should be abort when component is unmounted.  
+if the value is false, onSuccess and onError callbacks will be called even if component is unmounted.
+
 **withProgress** `(optional) boolean`  
 by activate this prop, you can access to download progress when request is loading (in `requestState.loaded` and `requestState.total`).
 
 **responseType** `(optional, default 'json') 'arraybuffer' | 'blob' | 'document' | 'json' | 'text'`  
 the type of response expected.
 
-**onSuccess** `(optional) function (data: T): void`  
+**onSuccess** `(optional) function (data: T, params: RequestParams): void`  
 callback when request succeed, can be usefull to display a success message.
-`T` is a generic type depending on response type
+`T` is a generic type depending on response type.  
+`params` are request parameters used by `fetch` call, the list of parameters are listed in `fetch` prop documentation.
 
-**onError** `(optional) function (error: any): void`  
-callback when request failed, can be usefull to display an error message
+**onError** `(optional) function (error: any, params: RequestParams): void`  
+callback when request failed, can be usefull to display an error message.  
+`params` are request parameters used by `fetch` call, the list of parameters are listed in `fetch` prop documentation.
 
 **children** `function (ChildrenParams): ReactNode`  
 params given by children function are :
@@ -242,18 +248,24 @@ Request body.
 **loaderDelay** `(optional) number`  
 delay before children param `requestState.timeoutReached` become true when request is loading. Can be usefull if you want display a loader after a delay.
 
+**abortOnUnmount** `(optional, default true) boolean`  
+define if request should be abort when component is unmounted.  
+if the value is false, onSuccess and onError callbacks will be called even if component is unmounted.
+
 **withProgress** `(optional) boolean`  
 by activate this prop, you can access to download progress when request is loading (in `requestState.loaded` and `requestState.total`).
 
 **responseType** `(optional, default to 'json') 'arraybuffer' | 'blob' | 'document' | 'json' | 'text'`  
 the type of response expected.
 
-**onSuccess** `(optional) function (data: T): void`  
+**onSuccess** `(optional) function (data: T, params: RequestParams): void`  
 callback when request succeed, can be usefull to display a success message.
-`T` is a generic type depending on response type
+`T` is a generic type depending on response type.  
+`params` are request parameters used by `fetch` call, the list of parameters are listed in `fetch` prop documentation.
 
-**onError** `(optional) function (error: any): void`  
-callback when request failed, can be usefull to display an error message
+**onError** `(optional) function (error: any, params: RequestParams): void`  
+callback when request failed, can be usefull to display an error message.  
+`params` are request parameters used by `fetch` call, the list of parameters are listed in `fetch` prop documentation.
 
 **children** `function (ChildrenParams): ReactNode`  
 params available in children function are :
