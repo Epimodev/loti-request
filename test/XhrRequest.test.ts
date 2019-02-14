@@ -1,5 +1,5 @@
 import XhrRequest from '../src/utils/XhrRequest';
-import { FetchParams, RequestOptions } from '../src/utils/types';
+import { RequestParams, RequestOptions } from '../src/utils/types';
 import { createXhrMock } from './utils/xhr';
 
 const global: any = window;
@@ -14,7 +14,7 @@ describe('XhrRequest', () => {
     const xhrMock = createXhrMock({});
     const xhrInstance = new xhrMock();
     global.XMLHttpRequest = jest.fn(() => xhrInstance) as any;
-    const fetchParams: FetchParams = {
+    const fetchParams: RequestParams = {
       url: 'http://fake-url.com',
     };
     const options: RequestOptions = {
