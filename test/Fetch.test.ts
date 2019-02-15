@@ -4,12 +4,16 @@ import Fetch from '../src/Fetch';
 import cache from '../src/utils/cache';
 import { FetchPolicy } from '../src/utils/types';
 import { createXhrMock } from './utils/xhr';
+import { flushMountedComponents } from './utils/components';
 
 const global: any = window;
 const nativeXhr = global.XMLHttpRequest;
 
 describe('Fetch', () => {
+  const mountedComponents: TestRenderer.ReactTestRenderer[] = [];
+
   afterEach(() => {
+    flushMountedComponents(mountedComponents);
     cache.reset();
     global.XMLHttpRequest = nativeXhr;
   });
@@ -27,7 +31,7 @@ describe('Fetch', () => {
       withProgress: false,
     });
 
-    TestRenderer.create(fetchElement);
+    mountedComponents.push(TestRenderer.create(fetchElement));
 
     expect(xhrInstance.open.mock.calls.length).toBe(1);
     expect(xhrInstance.send.mock.calls.length).toBe(1);
@@ -53,8 +57,8 @@ describe('Fetch', () => {
       withProgress: false,
     });
 
-    TestRenderer.create(firstFetchElement);
-    TestRenderer.create(secondFetchElement);
+    mountedComponents.push(TestRenderer.create(firstFetchElement));
+    mountedComponents.push(TestRenderer.create(secondFetchElement));
 
     expect(xhrInstance.open.mock.calls.length).toBe(2);
     expect(xhrInstance.send.mock.calls.length).toBe(2);
@@ -83,9 +87,9 @@ describe('Fetch', () => {
         withProgress: false,
       });
 
-      TestRenderer.create(firstFetchElement);
+      mountedComponents.push(TestRenderer.create(firstFetchElement));
       setTimeout(() => {
-        TestRenderer.create(secondFetchElement);
+        mountedComponents.push(TestRenderer.create(secondFetchElement));
 
         expect(xhrInstance.open.mock.calls.length).toBe(1);
         expect(xhrInstance.send.mock.calls.length).toBe(1);
@@ -117,9 +121,9 @@ describe('Fetch', () => {
         withProgress: false,
       });
 
-      TestRenderer.create(firstFetchElement);
+      mountedComponents.push(TestRenderer.create(firstFetchElement));
       setTimeout(() => {
-        TestRenderer.create(secondFetchElement);
+        mountedComponents.push(TestRenderer.create(secondFetchElement));
 
         expect(xhrInstance.open.mock.calls.length).toBe(1);
         expect(xhrInstance.send.mock.calls.length).toBe(1);
@@ -152,9 +156,9 @@ describe('Fetch', () => {
         withProgress: false,
       });
 
-      TestRenderer.create(firstFetchElement);
+      mountedComponents.push(TestRenderer.create(firstFetchElement));
       setTimeout(() => {
-        TestRenderer.create(secondFetchElement);
+        mountedComponents.push(TestRenderer.create(secondFetchElement));
 
         expect(xhrInstance.open.mock.calls.length).toBe(1);
         expect(xhrInstance.send.mock.calls.length).toBe(1);
@@ -187,9 +191,9 @@ describe('Fetch', () => {
         withProgress: false,
       });
 
-      TestRenderer.create(firstFetchElement);
+      mountedComponents.push(TestRenderer.create(firstFetchElement));
       setTimeout(() => {
-        TestRenderer.create(secondFetchElement);
+        mountedComponents.push(TestRenderer.create(secondFetchElement));
 
         expect(xhrInstance.open.mock.calls.length).toBe(2);
         expect(xhrInstance.send.mock.calls.length).toBe(2);
@@ -221,9 +225,9 @@ describe('Fetch', () => {
         withProgress: false,
       });
 
-      TestRenderer.create(firstFetchElement);
+      mountedComponents.push(TestRenderer.create(firstFetchElement));
       setTimeout(() => {
-        TestRenderer.create(secondFetchElement);
+        mountedComponents.push(TestRenderer.create(secondFetchElement));
 
         expect(xhrInstance.open.mock.calls.length).toBe(2);
         expect(xhrInstance.send.mock.calls.length).toBe(2);
@@ -315,7 +319,7 @@ describe('Fetch', () => {
       });
 
       const firstFetch = TestRenderer.create(firstFetchElement);
-      TestRenderer.create(secondFetchElement);
+      mountedComponents.push(TestRenderer.create(secondFetchElement));
 
       setTimeout(() => {
         firstFetch.unmount();
@@ -346,7 +350,7 @@ describe('Fetch', () => {
         onError: onErrorMock,
       });
 
-      TestRenderer.create(fetchElement);
+      mountedComponents.push(TestRenderer.create(fetchElement));
 
       setTimeout(() => {
         expect(xhrInstance.open.mock.calls.length).toBe(1);
@@ -377,7 +381,7 @@ describe('Fetch', () => {
         onError: onErrorMock,
       });
 
-      TestRenderer.create(fetchElement);
+      mountedComponents.push(TestRenderer.create(fetchElement));
 
       setTimeout(() => {
         expect(xhrInstance.open.mock.calls.length).toBe(1);

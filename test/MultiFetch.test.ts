@@ -3,12 +3,16 @@ import * as TestRenderer from 'react-test-renderer';
 import MultiFetch from '../src/MultiFetch';
 import cache from '../src/utils/cache';
 import { createXhrMock } from './utils/xhr';
+import { flushMountedComponents } from './utils/components';
 
 const global: any = window;
 const nativeXhr = global.XMLHttpRequest;
 
 describe('MultiFetch', () => {
+  const mountedComponents: TestRenderer.ReactTestRenderer[] = [];
+
   afterEach(() => {
+    flushMountedComponents(mountedComponents);
     cache.reset();
     global.XMLHttpRequest = nativeXhr;
   });
@@ -30,7 +34,7 @@ describe('MultiFetch', () => {
       withProgress: false,
     });
 
-    TestRenderer.create(fetchElement);
+    mountedComponents.push(TestRenderer.create(fetchElement));
 
     const nbRequestAttempted = Object.keys(requests).length;
     expect(xhrInstance.open.mock.calls.length).toBe(nbRequestAttempted);
