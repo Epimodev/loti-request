@@ -6,6 +6,15 @@ import { FetchPolicy } from '../src/utils/types';
 import { createXhrMock } from './utils/xhr';
 import { flushMountedComponents } from './utils/components';
 
+/**
+ * All mounted component shoud be push in `mountedComponents`
+ * `mountedComponents` are unmount after each test
+ * This avoid those components to be rerendered during the next state and call xhr mock of other tests
+ *
+ * After each `TestRenderer.create(component)` there is `TestRenderer.create(null)`
+ * without this, `useEffect` of custom hook is not called
+ */
+
 const global: any = window;
 const nativeXhr = global.XMLHttpRequest;
 
@@ -32,6 +41,7 @@ describe('Fetch', () => {
     });
 
     mountedComponents.push(TestRenderer.create(fetchElement));
+    TestRenderer.create(null);
 
     expect(xhrInstance.open.mock.calls.length).toBe(1);
     expect(xhrInstance.send.mock.calls.length).toBe(1);
@@ -59,6 +69,7 @@ describe('Fetch', () => {
 
     mountedComponents.push(TestRenderer.create(firstFetchElement));
     mountedComponents.push(TestRenderer.create(secondFetchElement));
+    TestRenderer.create(null);
 
     expect(xhrInstance.open.mock.calls.length).toBe(2);
     expect(xhrInstance.send.mock.calls.length).toBe(2);
@@ -88,8 +99,10 @@ describe('Fetch', () => {
       });
 
       mountedComponents.push(TestRenderer.create(firstFetchElement));
+      TestRenderer.create(null);
       setTimeout(() => {
         mountedComponents.push(TestRenderer.create(secondFetchElement));
+        TestRenderer.create(null);
 
         expect(xhrInstance.open.mock.calls.length).toBe(1);
         expect(xhrInstance.send.mock.calls.length).toBe(1);
@@ -122,8 +135,10 @@ describe('Fetch', () => {
       });
 
       mountedComponents.push(TestRenderer.create(firstFetchElement));
+      TestRenderer.create(null);
       setTimeout(() => {
         mountedComponents.push(TestRenderer.create(secondFetchElement));
+        TestRenderer.create(null);
 
         expect(xhrInstance.open.mock.calls.length).toBe(1);
         expect(xhrInstance.send.mock.calls.length).toBe(1);
@@ -132,7 +147,6 @@ describe('Fetch', () => {
     });
   });
 
-  // tslint:disable-next-line max-line-length
   test("When fetch policy is `network-only` don't send request twice when request is already loading", () => {
     return new Promise(resolve => {
       const loadingDuration = 50;
@@ -157,8 +171,10 @@ describe('Fetch', () => {
       });
 
       mountedComponents.push(TestRenderer.create(firstFetchElement));
+      TestRenderer.create(null);
       setTimeout(() => {
         mountedComponents.push(TestRenderer.create(secondFetchElement));
+        TestRenderer.create(null);
 
         expect(xhrInstance.open.mock.calls.length).toBe(1);
         expect(xhrInstance.send.mock.calls.length).toBe(1);
@@ -167,7 +183,6 @@ describe('Fetch', () => {
     });
   });
 
-  // tslint:disable-next-line max-line-length
   test('When fetch policy is `network-only` send request twice even if request is already succeed', () => {
     return new Promise(resolve => {
       const loadingDuration = 20;
@@ -192,8 +207,10 @@ describe('Fetch', () => {
       });
 
       mountedComponents.push(TestRenderer.create(firstFetchElement));
+      TestRenderer.create(null);
       setTimeout(() => {
         mountedComponents.push(TestRenderer.create(secondFetchElement));
+        TestRenderer.create(null);
 
         expect(xhrInstance.open.mock.calls.length).toBe(2);
         expect(xhrInstance.send.mock.calls.length).toBe(2);
@@ -226,8 +243,10 @@ describe('Fetch', () => {
       });
 
       mountedComponents.push(TestRenderer.create(firstFetchElement));
+      TestRenderer.create(null);
       setTimeout(() => {
         mountedComponents.push(TestRenderer.create(secondFetchElement));
+        TestRenderer.create(null);
 
         expect(xhrInstance.open.mock.calls.length).toBe(2);
         expect(xhrInstance.send.mock.calls.length).toBe(2);
@@ -253,6 +272,7 @@ describe('Fetch', () => {
       });
 
       const firstFetch = TestRenderer.create(firstFetchElement);
+      TestRenderer.create(null);
 
       setTimeout(() => {
         firstFetch.unmount();
@@ -265,7 +285,7 @@ describe('Fetch', () => {
     });
   });
 
-  test('Don\'t abort request when abortOnUnmount is disabled', () => {
+  test("Don't abort request when abortOnUnmount is disabled", () => {
     return new Promise(resolve => {
       const loadingDuration = 100;
       const unmountDelay = 20;
@@ -283,6 +303,7 @@ describe('Fetch', () => {
       });
 
       const firstFetch = TestRenderer.create(firstFetchElement);
+      TestRenderer.create(null);
 
       setTimeout(() => {
         firstFetch.unmount();
@@ -320,6 +341,7 @@ describe('Fetch', () => {
 
       const firstFetch = TestRenderer.create(firstFetchElement);
       mountedComponents.push(TestRenderer.create(secondFetchElement));
+      TestRenderer.create(null);
 
       setTimeout(() => {
         firstFetch.unmount();
@@ -351,6 +373,7 @@ describe('Fetch', () => {
       });
 
       mountedComponents.push(TestRenderer.create(fetchElement));
+      TestRenderer.create(null);
 
       setTimeout(() => {
         expect(xhrInstance.open.mock.calls.length).toBe(1);
@@ -382,6 +405,7 @@ describe('Fetch', () => {
       });
 
       mountedComponents.push(TestRenderer.create(fetchElement));
+      TestRenderer.create(null);
 
       setTimeout(() => {
         expect(xhrInstance.open.mock.calls.length).toBe(1);
@@ -416,6 +440,7 @@ describe('Fetch', () => {
       });
 
       const firstFetch = TestRenderer.create(firstFetchElement);
+      TestRenderer.create(null);
 
       setTimeout(() => {
         firstFetch.unmount();
@@ -455,6 +480,7 @@ describe('Fetch', () => {
       });
 
       const firstFetch = TestRenderer.create(firstFetchElement);
+      TestRenderer.create(null);
 
       setTimeout(() => {
         firstFetch.unmount();

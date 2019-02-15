@@ -10,7 +10,7 @@ describe('XhrRequest', () => {
     global.XMLHttpRequest = nativeXhr;
   });
 
-  test('Open and send a request at XhrRequest instanciation', () => {
+  test('Open and send a request at XhrRequest only after `fetch()` call', () => {
     const xhrMock = createXhrMock({});
     const xhrInstance = new xhrMock();
     global.XMLHttpRequest = jest.fn(() => xhrInstance) as any;
@@ -23,6 +23,11 @@ describe('XhrRequest', () => {
     };
 
     const request = new XhrRequest(fetchParams, options);
+
+    expect(xhrInstance.open.mock.calls.length).toBe(0);
+    expect(xhrInstance.send.mock.calls.length).toBe(0);
+
+    request.fetch();
 
     expect(xhrInstance.open.mock.calls.length).toBe(1);
     expect(xhrInstance.send.mock.calls.length).toBe(1);

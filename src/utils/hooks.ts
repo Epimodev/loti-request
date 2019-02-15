@@ -1,0 +1,41 @@
+import { useRef } from 'react';
+
+function depsChanged(
+  prev: ReadonlyArray<any>,
+  current: ReadonlyArray<any>,
+  isDepEqual: (prevDepValue: any, currentDepValue: any) => boolean,
+): boolean {
+  const currentLength = current.length;
+  if (prev.length !== currentLength) {
+    return false;
+  }
+
+  for (let i = 0; i < currentLength; i += 1) {
+    if (!isDepEqual(prev[i], current[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function useSpecificMemo<T>(
+  factory: () => T,
+  deps: ReadonlyArray<any>,
+  isDepEqual: (prevDepValue: any, currentDepValue: any) => boolean,
+): T {
+  const value = useRef<T | null>(null);
+  const previousDeps = useRef(deps);
+
+  if (value.current === null) {
+    value.current = factory();
+  }
+  if (!depsChanged(previousDeps.current, deps, isDepEqual)) {
+    previousDeps.current = deps;
+    value.current = factory();
+  }
+
+  return value.current as T;
+}
+
+export { useSpecificMemo };

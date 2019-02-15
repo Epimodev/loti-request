@@ -16,6 +16,19 @@ function areBodyEquals(bodyA?: HttpBody, bodyB?: HttpBody) {
   return bodyA === bodyB;
 }
 
+function areRequestParamsEquals(paramsA: RequestParams, paramsB: RequestParams): boolean {
+  if (paramsA === paramsB) {
+    return true;
+  }
+  return (
+    paramsA.url === paramsB.url &&
+    paramsA.method === paramsB.method &&
+    areParamsEquals(paramsA.query, paramsB.query) &&
+    areBodyEquals(paramsA.body, paramsB.body) &&
+    areParamsEquals(paramsA.headers, paramsB.headers)
+  );
+}
+
 function isRequestOk({ status }: XMLHttpRequest) {
   return status >= 200 && status <= 299;
 }
@@ -61,12 +74,11 @@ class XhrRequest<T> {
     this.xhr = new XMLHttpRequest();
     this.params = fetchParams;
     this.options = requestOptions;
-    this.fetch();
   }
 
   fetch() {
-    const { url, method = 'GET', headers, query, body } = this.params;
-    const { loaderDelay = 0, withProgress = false, responseType = 'json' } = this.options;
+    const { url, method = 'GET', headers, query, body, responseType = 'json' } = this.params;
+    const { loaderDelay = 0, withProgress = false } = this.options;
 
     // if there isn't loader delay, we update request state once
     if (!loaderDelay) {
@@ -142,14 +154,8 @@ class XhrRequest<T> {
     this.setRequestState({ status: 'FAILED', error, withLoader: false });
   }
 
-  hasSameParams(params: RequestParams) {
-    return (
-      this.params.url === params.url &&
-      this.params.method === params.method &&
-      areParamsEquals(this.params.query, params.query) &&
-      areBodyEquals(this.params.body, params.body) &&
-      areParamsEquals(this.params.headers, params.headers)
-    );
+  hasSameParams(params: RequestParams): boolean {
+    return areRequestParamsEquals(this.params, params);
   }
 
   addSuccessCallbacks(callback: (response: T, params: RequestParams) => void) {
@@ -195,3 +201,4 @@ class XhrRequest<T> {
 }
 
 export default XhrRequest;
+export { areRequestParamsEquals };

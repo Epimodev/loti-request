@@ -38,13 +38,13 @@ interface RequestParams {
   headers?: { [key: string]: string };
   query?: { [key: string]: string };
   body?: HttpBody;
+  responseType?: 'arraybuffer' | 'blob' | 'document' | 'json' | 'text';
 }
 
 interface RequestOptions {
   abortOnUnmount?: boolean;
   loaderDelay?: number;
   withProgress?: boolean;
-  responseType?: 'arraybuffer' | 'blob' | 'document' | 'json' | 'text';
 }
 
 export { FetchState, RequestState, RequestParams, RequestOptions, XhrBody, HttpBody, FetchPolicy };

@@ -9,6 +9,7 @@
     "variable-name": false,
     "import-name": false,
     "align": false,
-    "object-shorthand-properties-first": false
+    "object-shorthand-properties-first": false,
+    "max-line-length": false
   }
 }
