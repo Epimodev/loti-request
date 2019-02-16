@@ -93,6 +93,7 @@ class Request<T> extends Component<Props<T>, State<T>> {
     this.request = new XhrRequest(requestParams, requestOptions);
     this.updateRequestState(this.request.state);
     this.request.addStateListener(this.updateRequestState);
+    this.request.fetch();
   }
 
   render() {
