@@ -1,6 +1,6 @@
 {
   "name": "loti-request",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "React components to make http request declarative",
   "author": "Frederic Godin",
   "repository": "Epimodev/loti-request",
