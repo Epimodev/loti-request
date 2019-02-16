@@ -50,7 +50,7 @@ function getRequestParams(
 }
 
 function getRequestOptions(options: FetchOptions<any>): RequestOptions {
-  const { loaderDelay, withProgress, abortOnUnmount, responseType } = options;
+  const { loaderDelay, withProgress, abortOnUnmount } = options;
   return {
     loaderDelay,
     withProgress,

@@ -1,6 +1,7 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
+import * as swallowEquals from 'shallow-equal/objects';
 
-function depsChanged(
+function areDepsEqual(
   prev: ReadonlyArray<any>,
   current: ReadonlyArray<any>,
   isDepEqual: (prevDepValue: any, currentDepValue: any) => boolean,
@@ -30,7 +31,7 @@ function useSpecificMemo<T>(
   if (value.current === null) {
     value.current = factory();
   }
-  if (!depsChanged(previousDeps.current, deps, isDepEqual)) {
+  if (!areDepsEqual(previousDeps.current, deps, isDepEqual)) {
     previousDeps.current = deps;
     value.current = factory();
   }
@@ -38,4 +39,14 @@ function useSpecificMemo<T>(
   return value.current as T;
 }
 
-export { useSpecificMemo };
+function useShallowEqualsMemo<T>(factory: () => T, deps: ReadonlyArray<any>): T {
+  return useSpecificMemo(factory, deps, swallowEquals);
+}
+
+function useUnmount(factory: () => void) {
+  useEffect(() => {
+    return factory;
+  }, []);
+}
+
+export { useSpecificMemo, useShallowEqualsMemo, useUnmount };
