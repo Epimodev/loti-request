@@ -1,8 +1,11 @@
 # loti-request
 A new component to make declarative request with react
 
-## ⚠️ This library is under active development and API may change until version 1
-## ℹ️ API has change between version 0.1.0 and 0.2.0
+> ℹ️ Since version v0.4.0 loti-request use react hooks, so react >= 16.8.0 is required
+
+> ️️ℹ️ After a few months using this lib on projects I didn't need to make breaking change since v0.2.0 so the api shouldn't change a lot in the future.
+
+> In version v0.4.0 `MultiFetch` component is removed, the goal of this component was to avoid nested `Fetch` components to get several ressources in a component. Thanks to react hooks, we haven't anymore this problem so `MultiFetch` become useless.
 
 ## Install
 
@@ -23,14 +26,35 @@ Even if there are other librairies doing that I want to bring some new ideas abo
 
 ## Plan for futur
 - [x] option to select fetch policy (use cache or not)
+- [x] create hooks for next version of react
 - add upload progress
-- create hooks for next version of react
-- ~~possibility to use custom cache~~
+- possibility to use custom cache
 - ~~improve MultiFetch component to make possible have requests with different response types~~
 
 ## Basic examples
 
 #### fetch one ressource
+```jsx
+import { useFetch } from 'loti-request';
+
+...
+
+const MyComponent = () => {
+  const { status, data } = useFetch({ url: 'http://localhost:3000/posts/1' });
+
+  switch (status) {
+    case 'LOADING':
+      return 'Loading request';
+    case 'FAILED':
+      return 'Request failed';
+    case 'SUCCESS':
+      return <div>Request SUCCESS 🎉 {data.title}</div>;
+  }
+}
+```
+
+or with render prop
+
 ```jsx
 import { Fetch } from 'loti-request';
 
@@ -52,38 +76,33 @@ import { Fetch } from 'loti-request';
 </Fetch>
 ```
 
-#### fetch several ressources
+#### submit form
 ```jsx
-import { MultiFetch } from 'loti-request';
+import { useRequest } from 'loti-request';
 
 ...
 
-<MultiFetch
-  requests={{
-    posts: {
-      url: 'http://localhost:3000/posts',
-    },
-    comments: {
-      url: 'http://localhost:3000/comments',
-    },
-  }}
->
-  {({ status }) => {
-    switch (status) {
-      case 'LOADING':
-        return 'At least one request is loading';
-      case 'FAILED':
-        return 'At least one request failed';
-      case 'SUCCESS':
-        // posts are available at `requestState.data.posts`
-        // comments are available at `requestState.data.comments`
-        return <div>Requests SUCCESS 🎉 </div>;
-    }
-  }}
-</MultiFetch>
+const MyComponent = () => {
+  const { status, fetch } = useRequest({
+    url: 'http://localhost:3000/posts',
+    method: 'POST',
+    onSuccess: () => console.log('Submit Succeed'),
+    onError: () => console.log('Submit Failed'),
+  });
+
+  return (
+    <Fragment>
+      <button onClick={() => fetch()} disabled={status === 'LOADING'}>
+        {status === 'LOADING' ? 'Loading' : 'Submit'}
+      </button>
+      {status === 'FAILED' && <span>Submit Failed</span>}
+    </Fragment>
+  );
+}
 ```
 
-#### submit form
+or with render prop
+
 ```jsx
 import { Request } from 'loti-request';
 
@@ -100,7 +119,7 @@ import { Request } from 'loti-request';
       <button onClick={() => fetch()} disabled={status === 'LOADING'}>
         {status === 'LOADING' ? 'Loading' : 'Submit'}
       </button>
-      {status === 'FAILED' && <span>'Submit Failed'</span>}
+      {status === 'FAILED' && <span>Submit Failed</span>}
     </Fragment>
   )}
 </Request>
@@ -128,70 +147,16 @@ import { RequestProvider } from 'loti-request'
 </RequestProvider>
 ```
 
-### Fetch component
-This component will automatically fetch data on mount and on props change.
+### useFetch hook
+This hook will automatically fetch data on mount and on props change.
 On unmount the request will be aborted if it's loading.
 If request has already be called, the response is get from cache instead of a http request.
 
-#### Props :
-**url** `string`  
-url to call.
-
-**method** `(optional, default 'GET') 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'`  
-Http method to use.
-
-**headers** `(optional) object`  
-Http headers.
-
-**query** `(optional) object`  
-Request url query.
-
-**body** `(optional) object | string | FormData | Blob`  
-Request body.
-
-**loaderDelay** `(optional) number`  
-delay (in milliseconds) before children param `requestState.timeoutReached` become true when request is loading. Can be usefull if you want display a loader after a delay.
-
-**abortOnUnmount** `(optional, default true) boolean`  
-define if request should be abort when component is unmounted.  
-if the value is false, onSuccess and onError callbacks will be called even if component is unmounted.
-
-**withProgress** `(optional) boolean`  
-by activate this prop, you can access to download progress when request is loading (in `requestState.loaded` and `requestState.total`).
-
-**responseType** `(optional, default 'json') 'arraybuffer' | 'blob' | 'document' | 'json' | 'text'`  
-the type of response expected.
-
-**onSuccess** `(optional) function (data: T, params: RequestParams): void`  
-callback when request succeed, can be usefull to display a success message.
-`T` is a generic type depending on response type.  
-`params` are request parameters used by `fetch` call, the list of parameters are listed in `fetch` prop documentation.
-
-**onError** `(optional) function (error: any, params: RequestParams): void`  
-callback when request failed, can be usefull to display an error message.  
-`params` are request parameters used by `fetch` call, the list of parameters are listed in `fetch` prop documentation.
-
-**children** `function (ChildrenParams): ReactNode`  
-params given by children function are :
-- **status** `'LOADING' | 'FAILED' | 'SUCCESS'`, request status.
-- **withLoader** `boolean`: true when request duration exceed `loaderDelay` prop
-- **progress** `{ loaded: number, total: number }`: quantity of bytes downloaded and total to download (works only when `withProgress` is true)
-- **data** `T | undefined` response data. `T` is a generic type depending on response type.
-- **error** `any` the error thrown by request if status isn't between 200 and 299 or a runtime error if response type doesn't corrspond with http response.
-- **refetch** `function (): void` a function to recall request. Can be usefull to retry a request or to reload data after a specific event.
-
-### MultiFetch component
-Maybe you'll need to fetch several endpoints for a component. Instead to use several `Fetch` component, you can use `MultiFetch` which will work like `Fetch` component but enable the possibility to set several requests in props.
-Already loaded requests will be get from cache.
-On unmount loading requests will be aborted.
-
-#### Props :
-**requests** `object`
-the list of request to make. each key can take those params :
+### Options :
 - **url** `string`  
 url to call.
 
-- **method** `(optional) 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'`  
+- **method** `(optional, default 'GET') 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'`  
 Http method to use.
 
 - **headers** `(optional) object`  
@@ -203,72 +168,96 @@ Request url query.
 - **body** `(optional) object | string | FormData | Blob`  
 Request body.
 
-**loaderDelay** `(optional) number`  
-delay before children param `requestState.timeoutReached` become true when request is loading. Can be usefull if you want display a loader after a delay.
+- **loaderDelay** `(optional) number`  
+delay (in milliseconds) before children param `requestState.timeoutReached` become true when request is loading. Can be usefull if you want display a loader after a delay.
 
-**onSuccess** `(optional) function (data: T): void`  
-callback when request succeed, can be usefull to display a success message.
-`T` is a generic type depending on response type
-
-**onError** `(optional) function (error: any): void`  
-callback when request failed, can be usefull to display an error message
-
-**children** `function (ChildrenParams): ReactNode`  
-params available in children function are :
-- **status** `'LOADING' | 'FAILED' | 'SUCCESS'`, request status.
-- **withLoader** `boolean`: true when request duration exceed `loaderDelay` prop
-- **progress** `{ loaded: number, total: number }`: quantity of bytes downloaded and total to download (works only when `withProgress` is true)
-- **data** `T | undefined` response data. `T` is a generic type depending on response type.
-- **error** `any` the error thrown by request if status isn't between 200 and 299 or a runtime error if response type doesn't corrspond with http response.
-- **refetch** `function (): void` a function to recall request. Can be usefull to retry a request or to reload data after a specific event.
-> the schema of `data` correspond with `requests` props schema. For example if in `requests` there is a request in key `post`, the response of this request will be in `data.post`.
-
-
-### Request component
-If you want to fetch data only after a click on a button or if you want to send form data after submit, you can use `Request` component.
-No request are made on mount, request is made only after call of `fetch` function available in children param (see in example above).
-If `Request` component is unmount during loading, the request will be aborted.
-
-#### Props :
-**url** `(optional) string`  
-url to call.
-
-**method** `(optional default 'GET') 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'`  
-Http method to use.
-
-**headers** `(optional) object`  
-Http headers.
-
-**query** `(optional) object`  
-Request url query.
-
-**body** `(optional) object | string | FormData | Blob`  
-Request body.
-
-**loaderDelay** `(optional) number`  
-delay before children param `requestState.timeoutReached` become true when request is loading. Can be usefull if you want display a loader after a delay.
-
-**abortOnUnmount** `(optional, default true) boolean`  
+- **abortOnUnmount** `(optional, default true) boolean`  
 define if request should be abort when component is unmounted.  
 if the value is false, onSuccess and onError callbacks will be called even if component is unmounted.
 
-**withProgress** `(optional) boolean`  
+- **withProgress** `(optional) boolean`  
 by activate this prop, you can access to download progress when request is loading (in `requestState.loaded` and `requestState.total`).
 
-**responseType** `(optional, default to 'json') 'arraybuffer' | 'blob' | 'document' | 'json' | 'text'`  
+- **responseType** `(optional, default 'json') 'arraybuffer' | 'blob' | 'document' | 'json' | 'text'`  
 the type of response expected.
 
-**onSuccess** `(optional) function (data: T, params: RequestParams): void`  
+- **onSuccess** `(optional) function (data: T, params: RequestParams): void`  
+callback when request succeed, can be usefull to display a success message.
+`T` is a generic type depending on response type.  
+`params` are request parameters used by `fetch` call, the list of parameters are listed in `useFetch` options documentation.
+
+- **onError** `(optional) function (error: any, params: RequestParams): void`  
+callback when request failed, can be usefull to display an error message.  
+`params` are request parameters used by `fetch` call, the list of parameters are listed in `useFetch` options documentation.
+
+### Returned values :
+- **status** `'LOADING' | 'FAILED' | 'SUCCESS'`  
+request status.
+
+- **withLoader** `boolean`  
+true when request duration exceed `loaderDelay` prop
+
+- **progress** `{ loaded: number, total: number }`  
+quantity of bytes downloaded and total to download (works only when `withProgress` is true)
+
+- **data** `T | undefined`  
+response data. `T` is a generic type depending on response type.
+
+- **error** `any`  
+the error thrown by request if status isn't between 200 and 299 or a runtime error if response type doesn't correspond with http response.
+
+- **refetch** `function (): void`  
+a function to recall request. Can be usefull to retry a request or to reload data after a specific event.
+
+### Fetch component
+If you prefer render prop over hooks, you can use the `Fetch` component.
+Props of this component are exactly the same as `useFetch` options.
+The expected children of `Fetch` is a function with values returned by `useFetch` hook.
+
+### useRequest hook
+If you want to fetch data only after a click on a button or if you want to send form data after submit, you can use `useRequest` hook.
+No request is send on mount, request is send only after call of `fetch` function available in returned values (see in example above).
+If parent component is unmount during loading, the request will be aborted.
+
+### Options :
+- **url** `(optional) string`  
+url to call.
+
+- **method** `(optional default 'GET') 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'`  
+Http method to use.
+
+- **headers** `(optional) object`  
+Http headers.
+
+- **query** `(optional) object`  
+Request url query.
+
+- **body** `(optional) object | string | FormData | Blob`  
+Request body.
+
+- **loaderDelay** `(optional) number`  
+delay before children param `requestState.timeoutReached` become true when request is loading. Can be usefull if you want display a loader after a delay.
+
+- **abortOnUnmount** `(optional, default true) boolean`  
+define if request should be abort when component is unmounted.  
+if the value is false, onSuccess and onError callbacks will be called even if component is unmounted.
+
+- **withProgress** `(optional) boolean`  
+by activate this prop, you can access to download progress when request is loading (in `requestState.loaded` and `requestState.total`).
+
+- **responseType** `(optional, default to 'json') 'arraybuffer' | 'blob' | 'document' | 'json' | 'text'`  
+the type of response expected.
+
+- **onSuccess** `(optional) function (data: T, params: RequestParams): void`  
 callback when request succeed, can be usefull to display a success message.
 `T` is a generic type depending on response type.  
 `params` are request parameters used by `fetch` call, the list of parameters are listed in `fetch` prop documentation.
 
-**onError** `(optional) function (error: any, params: RequestParams): void`  
+- **onError** `(optional) function (error: any, params: RequestParams): void`  
 callback when request failed, can be usefull to display an error message.  
 `params` are request parameters used by `fetch` call, the list of parameters are listed in `fetch` prop documentation.
 
-**children** `function (ChildrenParams): ReactNode`  
-params available in children function are :
+### Returned values :
 - **fetch** `function (params: RequestParams): void` the function which make http request. `params` are :
   - **url** `(optional) string` url to call.
 
@@ -282,14 +271,27 @@ Request url query.
 
   - **body** `(optional) object | string | FormData | Blob` Request body.
 
-> params use in `fetch` are merge with props, so you can choose to set some params in component props like `method` and set other params like `body` or `query` in `fetch` call.
+> params use in `fetch` are merge with options, so you can choose to set some params in hook options like `method` and set other params like `body` or `query` in `fetch` call.
 
-- **status** `'NOT_SEND', 'LOADING' | 'FAILED' | 'SUCCESS'`, request status.
-- **withLoader** `boolean`: true when request duration exceed `loaderDelay` prop
-- **progress** `{ loaded: number, total: number }`: quantity of bytes downloaded and total to download (works only when `withProgress` is true)
-- **data** `T | undefined` response data. `T` is a generic type depending on response type.
-- **error** `any` the error thrown by request if status isn't between 200 and 299 or a runtime error if response type doesn't corrspond with http response.
+- **status** `'NOT_SEND', 'LOADING' | 'FAILED' | 'SUCCESS'`  
+request status.
 
+- **withLoader** `boolean`  
+true when request duration exceed `loaderDelay` prop
+
+- **progress** `{ loaded: number, total: number }`  
+quantity of bytes downloaded and total to download (works only when `withProgress` is true)
+
+- **data** `T | undefined`  
+response data. `T` is a generic type depending on response type.
+
+- **error** `any`  
+the error thrown by request if status isn't between 200 and 299 or a runtime error if response type doesn't correspond with http response.
+
+### Request component
+If you prefer render prop over hooks, you can use the `Request` component.
+Props of this component are exactly the same as `useRequest` options.
+The expected children of `Request` is a function with values returned by `useRequest` hook.
 
 ### Cache functions
 
