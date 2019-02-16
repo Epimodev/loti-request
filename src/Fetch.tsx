@@ -2,7 +2,7 @@ import { ReactElement } from 'react';
 import useFetch, { FetchOptions, ChildrenParams } from './useFetch';
 
 interface Props<T> extends FetchOptions<T> {
-  children: (params: ChildrenParams<T>) => ReactElement;
+  children: (params: ChildrenParams<T>) => ReactElement | null;
 }
 
 function Fetch<T>({ children, ...props }: Props<T>) {
