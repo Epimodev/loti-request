@@ -1,17 +1,17 @@
 import { stringify } from 'query-string';
-import * as swallowEquals from 'shallow-equal/objects';
+import * as shallowEquals from 'shallow-equal/objects';
 import { RequestParams, RequestOptions, RequestState, HttpBody, XhrBody } from './types';
 
 function areParamsEquals(paramA?: object, paramB?: object) {
   if (paramA && paramB) {
-    return swallowEquals(paramA, paramB);
+    return shallowEquals(paramA, paramB);
   }
   return !!paramA === !!paramB;
 }
 
 function areBodyEquals(bodyA?: HttpBody, bodyB?: HttpBody) {
   if (typeof bodyA === 'object' && typeof bodyB === 'object') {
-    return swallowEquals(bodyA, bodyB);
+    return shallowEquals(bodyA, bodyB);
   }
   return bodyA === bodyB;
 }
@@ -50,6 +50,7 @@ function setHeaders(headers: { [key: string]: string } | undefined, xhr: XMLHttp
 function createRequestState(): RequestState<any> {
   return {
     status: 'NOT_SEND',
+    statusCode: 0,
     progress: {
       loaded: 0,
       total: 1,
@@ -64,7 +65,11 @@ class XhrRequest<T> {
   // each success callbacks is called only once (usefull to call after component unmount)
   private onSuccessCallbacks: ((response: T, params: RequestParams) => void)[] = [];
   // each error callbacks is called only once (usefull to call after component unmount)
-  private onErrorCallbacks: ((response: object, params: RequestParams) => void)[] = [];
+  private onErrorCallbacks: ((
+    response: object,
+    statusCode: number,
+    params: RequestParams,
+  ) => void)[] = [];
   private onStateChangeListeners: ((newState: RequestState<T>) => void)[] = [];
   params: RequestParams;
   state: RequestState<T> = createRequestState();
@@ -97,14 +102,14 @@ class XhrRequest<T> {
 
     this.xhr.onload = () => {
       if (isRequestOk(this.xhr)) {
-        this.handleSuccess(this.xhr.response);
+        this.handleSuccess(this.xhr.response, this.xhr.status);
       } else {
-        this.handleError(this.xhr.response);
+        this.handleError(this.xhr.response, this.xhr.status);
       }
     };
 
     this.xhr.onerror = () => {
-      this.handleError(this.xhr.statusText);
+      this.handleError(this.xhr.statusText, this.xhr.status);
     };
 
     if (withProgress) {
@@ -133,25 +138,26 @@ class XhrRequest<T> {
     this.setRequestState({ progress });
   }
 
-  private handleSuccess(response: T) {
+  private handleSuccess(response: T, statusCode: number) {
     while (this.onSuccessCallbacks.length > 0) {
       const successCallback = this.onSuccessCallbacks.shift();
       successCallback!(response, this.params);
     }
     this.setRequestState({
       status: 'SUCCESS',
+      statusCode,
       data: response,
       withLoader: false,
       error: undefined,
     });
   }
 
-  private handleError(error: any) {
+  private handleError(response: any, statusCode: number) {
     while (this.onErrorCallbacks.length > 0) {
       const errorCallback = this.onErrorCallbacks.shift();
-      errorCallback!(error, this.params);
+      errorCallback!(response, statusCode, this.params);
     }
-    this.setRequestState({ status: 'FAILED', error, withLoader: false });
+    this.setRequestState({ status: 'FAILED', statusCode, error: response, withLoader: false });
   }
 
   hasSameParams(params: RequestParams): boolean {
@@ -162,7 +168,9 @@ class XhrRequest<T> {
     this.onSuccessCallbacks.push(callback);
   }
 
-  addErrorCallbacks(callback: (response: object, params: RequestParams) => void) {
+  addErrorCallbacks(
+    callback: (response: object, statusCode: number, params: RequestParams) => void,
+  ) {
     this.onErrorCallbacks.push(callback);
   }
 

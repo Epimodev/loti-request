@@ -6,7 +6,7 @@ import { RequestState, RequestParams, RequestOptions } from './utils/types';
 
 interface UseRequestOptions<T> extends Partial<RequestParams>, RequestOptions {
   onSuccess?: (data: T, params: RequestParams) => void;
-  onError?: (error: any, params: RequestParams) => void;
+  onError?: (response: any, statusCode: number, params: RequestParams) => void;
 }
 
 interface ChildrenParams<T> extends RequestState<T> {
@@ -14,7 +14,12 @@ interface ChildrenParams<T> extends RequestState<T> {
 }
 
 function getInitialRequestState(): RequestState<any> {
-  return { status: 'NOT_SEND', withLoader: false, progress: { loaded: 0, total: 1 } };
+  return {
+    status: 'NOT_SEND',
+    statusCode: 0,
+    withLoader: false,
+    progress: { loaded: 0, total: 1 },
+  };
 }
 
 function getRequestParams(
@@ -72,7 +77,7 @@ function useRequest<T>(options: UseRequestOptions<T>): ChildrenParams<T> {
     if (onSuccess && requestState.status === 'SUCCESS') {
       onSuccess(requestState.data!, request!.params);
     } else if (onError && requestState.status === 'FAILED') {
-      onError(requestState.error, request!.params);
+      onError(requestState.error, requestState.statusCode, request!.params);
     }
 
     setRequestState(requestState);
@@ -92,19 +97,18 @@ function useRequest<T>(options: UseRequestOptions<T>): ChildrenParams<T> {
   );
 
   useUnmount(() => {
-    const { current: request } = requestRef;
-    if (request) {
+    if (requestRef.current) {
       const { onSuccess, onError, abortOnUnmount } = options;
-      if (request.state.status === 'LOADING' && !abortOnUnmount) {
+      if (requestRef.current.state.status === 'LOADING' && !abortOnUnmount) {
         if (onSuccess) {
-          request.addSuccessCallbacks(onSuccess);
+          requestRef.current.addSuccessCallbacks(onSuccess);
         }
         if (onError) {
-          request.addErrorCallbacks(onError);
+          requestRef.current.addErrorCallbacks(onError);
         }
       }
 
-      request.removeStateListener(updateRequestState);
+      requestRef.current.removeStateListener(updateRequestState);
     }
   });
 

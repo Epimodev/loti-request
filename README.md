@@ -186,9 +186,10 @@ callback when request succeed, can be usefull to display a success message.
 `T` is a generic type depending on response type.  
 `params` are request parameters used by `fetch` call, the list of parameters are listed in `useFetch` options documentation.
 
-- **onError** `(optional) function (error: any, params: RequestParams): void`  
+- **onError** `(optional) function (response: any, statusCode: number, params: RequestParams): void`  
 callback when request failed, can be usefull to display an error message.  
 `params` are request parameters used by `fetch` call, the list of parameters are listed in `useFetch` options documentation.
+> `statusCode` param was added in v0.5.0
 
 ### Returned values :
 - **status** `'LOADING' | 'FAILED' | 'SUCCESS'`  
@@ -253,9 +254,10 @@ callback when request succeed, can be usefull to display a success message.
 `T` is a generic type depending on response type.  
 `params` are request parameters used by `fetch` call, the list of parameters are listed in `fetch` prop documentation.
 
-- **onError** `(optional) function (error: any, params: RequestParams): void`  
+- **onError** `(optional) function (response: any, statusCode: number, params: RequestParams): void`  
 callback when request failed, can be usefull to display an error message.  
 `params` are request parameters used by `fetch` call, the list of parameters are listed in `fetch` prop documentation.
+> `statusCode` param was added in v0.5.0
 
 ### Returned values :
 - **fetch** `function (params: RequestParams): void` the function which make http request. `params` are :

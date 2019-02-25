@@ -1,5 +1,5 @@
 import { useRef, useEffect } from 'react';
-import * as swallowEquals from 'shallow-equal/objects';
+import * as shallowEquals from 'shallow-equal/objects';
 
 function areDepsEqual(
   prev: ReadonlyArray<any>,
@@ -40,7 +40,7 @@ function useSpecificMemo<T>(
 }
 
 function useShallowEqualsMemo<T>(factory: () => T, deps: ReadonlyArray<any>): T {
-  return useSpecificMemo(factory, deps, swallowEquals);
+  return useSpecificMemo(factory, deps, shallowEquals);
 }
 
 function useUnmount(factory: () => void) {

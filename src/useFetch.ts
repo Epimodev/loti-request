@@ -1,5 +1,5 @@
 import { useContext, useState, useEffect } from 'react';
-import * as swallowEquals from 'shallow-equal/objects';
+import * as shallowEquals from 'shallow-equal/objects';
 import { useSpecificMemo } from './utils/hooks';
 import XhrRequest, { areRequestParamsEquals } from './utils/XhrRequest';
 import cache from './utils/cache';
@@ -15,7 +15,7 @@ import {
 interface FetchOptions<T> extends RequestParams, RequestOptions {
   fetchPolicy?: FetchPolicy;
   onSuccess?: (data: T, params: RequestParams) => void;
-  onError?: (error: any, params: RequestParams) => void;
+  onError?: (response: any, statusCode: number, params: RequestParams) => void;
 }
 
 interface ChildrenParams<T> extends FetchState<T> {
@@ -30,7 +30,7 @@ function hasRequestDepChanged(depsA: RequestDep, depsB: RequestDep): boolean {
     return areRequestParamsEquals(depsA as RequestParams, depsB as RequestParams);
   }
   // if deps are contextHeader
-  return swallowEquals(depsA, depsB);
+  return shallowEquals(depsA, depsB);
 }
 
 function getRequestParams(
@@ -101,7 +101,7 @@ function useFetch<T>(options: FetchOptions<T>): ChildrenParams<T> {
       if (onSuccess && requestState.status === 'SUCCESS') {
         onSuccess(requestState.data!, request.params);
       } else if (onError && requestState.status === 'FAILED') {
-        onError(requestState.error, request.params);
+        onError(requestState.error, requestState.statusCode, request.params);
       }
 
       setFetchState(formatRequestState(requestState));

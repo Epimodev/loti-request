@@ -5,6 +5,7 @@ interface RequestProgress {
 
 interface RequestState<T> {
   status: 'NOT_SEND' | 'LOADING' | 'SUCCESS' | 'FAILED';
+  statusCode: number;
   withLoader: boolean;
   progress: RequestProgress;
   data?: T;
