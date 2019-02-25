@@ -79,6 +79,8 @@ class XhrRequest<T> {
     this.xhr = new XMLHttpRequest();
     this.params = fetchParams;
     this.options = requestOptions;
+
+    this.refetch = this.refetch.bind(this);
   }
 
   fetch() {
