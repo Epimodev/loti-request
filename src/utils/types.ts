@@ -9,6 +9,7 @@ interface RequestState<T> {
   withLoader: boolean;
   progress: RequestProgress;
   data?: T;
+  headers?: { [key: string]: string };
   error?: object;
 }
 

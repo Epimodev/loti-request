@@ -149,6 +149,7 @@ class XhrRequest<T> {
       status: 'SUCCESS',
       statusCode,
       data: response,
+      headers: this.getResponseHeaders(),
       withLoader: false,
       error: undefined,
     });
@@ -160,6 +161,23 @@ class XhrRequest<T> {
       errorCallback!(response, statusCode, this.params);
     }
     this.setRequestState({ status: 'FAILED', statusCode, error: response, withLoader: false });
+  }
+
+  private getResponseHeaders(): { [key: string]: string } {
+    const headers = this.xhr.getAllResponseHeaders();
+    const lines = headers.trim().split(/[\r\n]+/);
+
+    const headerMap: { [key: string]: string } = {};
+    lines.forEach(line => {
+      const parts = line.split(': ');
+      const key = parts.shift();
+      const value = parts.join(': ');
+      if (key) {
+        headerMap[key] = value;
+      }
+    });
+
+    return headerMap;
   }
 
   hasSameParams(params: RequestParams): boolean {

@@ -204,6 +204,9 @@ quantity of bytes downloaded and total to download (works only when `withProgres
 - **data** `T | undefined`  
 response data. `T` is a generic type depending on response type.
 
+- **headers** `object | undefined`  
+response headers.
+
 - **error** `any`  
 the error thrown by request if status isn't between 200 and 299 or a runtime error if response type doesn't correspond with http response.
 
@@ -286,6 +289,9 @@ quantity of bytes downloaded and total to download (works only when `withProgres
 
 - **data** `T | undefined`  
 response data. `T` is a generic type depending on response type.
+
+- **headers** `object | undefined`  
+response headers.
 
 - **error** `any`  
 the error thrown by request if status isn't between 200 and 299 or a runtime error if response type doesn't correspond with http response.
