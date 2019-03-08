@@ -81,8 +81,10 @@ function getRequest<T>(
 }
 
 function formatRequestState<T>(state: RequestState<T>): FetchState<T> {
-  const status = state.status === 'NOT_SEND' ? 'LOADING' : state.status;
-  return { ...state, status };
+  if (state.status === 'NOT_SEND') {
+    return { ...state, status: 'LOADING' };
+  }
+  return state as FetchState<T>;
 }
 
 function useFetch<T>(options: FetchOptions<T>): ChildrenParams<T> {
@@ -96,6 +98,8 @@ function useFetch<T>(options: FetchOptions<T>): ChildrenParams<T> {
   const [fetchState, setFetchState] = useState(() => formatRequestState(request.state));
 
   useEffect(() => {
+    // set request state when request changed
+    setFetchState(formatRequestState(request.state));
     const updateRequestState = (requestState: RequestState<T>) => {
       const { onSuccess, onError } = options;
       if (onSuccess && requestState.status === 'SUCCESS') {
