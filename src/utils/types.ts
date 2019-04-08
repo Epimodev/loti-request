@@ -13,10 +13,6 @@ interface RequestState<T> {
   error?: object;
 }
 
-interface FetchState<T> extends RequestState<T> {
-  status: 'LOADING' | 'SUCCESS' | 'FAILED';
-}
-
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
 type FetchPolicy = 'cache-first' | 'network-only';
@@ -49,4 +45,4 @@ interface RequestOptions {
   withProgress?: boolean;
 }
 
-export { FetchState, RequestState, RequestParams, RequestOptions, XhrBody, HttpBody, FetchPolicy };
+export { RequestState, RequestParams, RequestOptions, XhrBody, HttpBody, FetchPolicy };

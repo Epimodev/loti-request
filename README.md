@@ -22,7 +22,7 @@ npm install --save loti-request
 After using [Apollo client](https://github.com/apollographql/apollo-client), I find amazing to get server data declaratively. The goal of this library is to give a similar way to make http request on REST api.
 Even if there are other librairies doing that I want to bring some new ideas about api and some features like :
 - abort request on unmount
-- upload progress status
+- download progress status
 
 ## Plan for futur
 - [x] option to select fetch policy (use cache or not)
@@ -43,6 +43,7 @@ const MyComponent = () => {
   const { status, data } = useFetch({ url: 'http://localhost:3000/posts/1' });
 
   switch (status) {
+    case 'NOT_SEND':
     case 'LOADING':
       return 'Loading request';
     case 'FAILED':
@@ -65,6 +66,7 @@ import { Fetch } from 'loti-request';
 >
   {({ status, data }) => {
     switch (status) {
+      case 'NOT_SEND':
       case 'LOADING':
         return 'Loading request';
       case 'FAILED':
@@ -190,6 +192,11 @@ callback when request succeed, can be usefull to display a success message.
 callback when request failed, can be usefull to display an error message.  
 `params` are request parameters used by `fetch` call, the list of parameters are listed in `useFetch` options documentation.
 > `statusCode` param was added in v0.5.0
+
+- **preventRequest** `(optional) boolean`  
+when true, no request will be send. It make possible to have conditional useFetch.  
+for example we can add a condition to send request only when a search input has more than 3 characters.  
+if `preventRequest` become true during loading, the loading request will be abort.
 
 ### Returned values :
 - **status** `'LOADING' | 'FAILED' | 'SUCCESS'`  

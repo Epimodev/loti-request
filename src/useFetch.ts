@@ -4,21 +4,16 @@ import { useSpecificMemo } from './utils/hooks';
 import XhrRequest, { areRequestParamsEquals } from './utils/XhrRequest';
 import cache from './utils/cache';
 import { RequestContext } from './RequestProvider';
-import {
-  FetchState,
-  RequestState,
-  RequestParams,
-  RequestOptions,
-  FetchPolicy,
-} from './utils/types';
+import { RequestState, RequestParams, RequestOptions, FetchPolicy } from './utils/types';
 
 interface FetchOptions<T> extends RequestParams, RequestOptions {
   fetchPolicy?: FetchPolicy;
   onSuccess?: (data: T, params: RequestParams) => void;
   onError?: (response: any, statusCode: number, params: RequestParams) => void;
+  preventRequest?: boolean;
 }
 
-interface ChildrenParams<T> extends FetchState<T> {
+interface ChildrenParams<T> extends RequestState<T> {
   refetch: () => void;
 }
 
@@ -50,7 +45,7 @@ function getRequestParams(
 }
 
 function getRequestOptions(options: FetchOptions<any>): RequestOptions {
-  const { loaderDelay, withProgress, abortOnUnmount } = options;
+  const { loaderDelay, withProgress, abortOnUnmount = true } = options;
   return {
     loaderDelay,
     withProgress,
@@ -80,13 +75,6 @@ function getRequest<T>(
   return request;
 }
 
-function formatRequestState<T>(state: RequestState<T>): FetchState<T> {
-  if (state.status === 'NOT_SEND') {
-    return { ...state, status: 'LOADING' };
-  }
-  return state as FetchState<T>;
-}
-
 function useFetch<T>(options: FetchOptions<T>): ChildrenParams<T> {
   const contextHeaders = useContext(RequestContext);
   const requestParams = getRequestParams(options, contextHeaders);
@@ -95,11 +83,23 @@ function useFetch<T>(options: FetchOptions<T>): ChildrenParams<T> {
     [requestParams],
     hasRequestDepChanged,
   );
-  const [fetchState, setFetchState] = useState(() => formatRequestState(request.state));
+  const [fetchState, setFetchState] = useState(request.state);
 
   useEffect(() => {
+    // don't send request when `preventRequest` is enabled
+    if (options.preventRequest) {
+      setFetchState({
+        ...fetchState,
+        status: 'NOT_SEND',
+        withLoader: false,
+        progress: { loaded: 0, total: 1 },
+        statusCode: 0,
+      });
+      return;
+    }
+
     // set request state when request changed
-    setFetchState(formatRequestState(request.state));
+    setFetchState(request.state);
     const updateRequestState = (requestState: RequestState<T>) => {
       const { onSuccess, onError } = options;
       if (onSuccess && requestState.status === 'SUCCESS') {
@@ -108,7 +108,7 @@ function useFetch<T>(options: FetchOptions<T>): ChildrenParams<T> {
         onError(requestState.error, requestState.statusCode, request.params);
       }
 
-      setFetchState(formatRequestState(requestState));
+      setFetchState(requestState);
     };
 
     request.addStateListener(updateRequestState);
@@ -123,7 +123,7 @@ function useFetch<T>(options: FetchOptions<T>): ChildrenParams<T> {
     }
 
     return () => {
-      const { onSuccess, onError, abortOnUnmount } = options;
+      const { onSuccess, onError, abortOnUnmount = true } = options;
       if (request.state.status === 'LOADING' && !abortOnUnmount) {
         if (onSuccess) {
           request.addSuccessCallbacks(onSuccess);
@@ -135,7 +135,7 @@ function useFetch<T>(options: FetchOptions<T>): ChildrenParams<T> {
 
       request.removeStateListener(updateRequestState);
     };
-  }, [request]);
+  }, [request, options.preventRequest]);
 
   return {
     ...fetchState,

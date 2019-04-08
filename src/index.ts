@@ -4,7 +4,7 @@ import useRequest from './useRequest';
 import Fetch from './Fetch';
 import Request from './Request';
 import cache from './utils/cache';
-import { RequestParams, RequestState, FetchState } from './utils/types';
+import { RequestParams, RequestState } from './utils/types';
 
 const { removeRequests: removeCachedRequests, reset: resetCache } = cache;
 
@@ -18,5 +18,4 @@ export {
   resetCache,
   RequestParams,
   RequestState,
-  FetchState,
 };

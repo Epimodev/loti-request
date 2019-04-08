@@ -354,6 +354,67 @@ describe('Fetch', () => {
     });
   });
 
+  test('Don\'t send a request when preventRequest is enabled', () => {
+    const xhrMock = createXhrMock({});
+    const xhrInstance = new xhrMock();
+    global.XMLHttpRequest = jest.fn(() => xhrInstance) as any;
+
+    const fetchElement = createElement(Fetch, {
+      url: 'http://fake-url.com',
+      fetchPolicy: 'cache-first' as FetchPolicy,
+      children: () => createElement('div'),
+      loaderDelay: 0,
+      withProgress: false,
+      preventRequest: true,
+    });
+
+    mountedComponents.push(TestRenderer.create(fetchElement));
+    TestRenderer.create(null);
+
+    expect(xhrInstance.open.mock.calls.length).toBe(0);
+    expect(xhrInstance.send.mock.calls.length).toBe(0);
+  });
+
+  test('Abort request when preventRequest is enabled during loading', () => {
+    return new Promise(resolve => {
+      const loadingDuration = 100;
+      const updateDelay = 20;
+      const xhrMock = createXhrMock({ duration: loadingDuration });
+      const xhrInstance = new xhrMock();
+      global.XMLHttpRequest = jest.fn(() => xhrInstance) as any;
+
+      const fetchElement = createElement(Fetch, {
+        url: 'http://fake-url.com',
+        fetchPolicy: 'cache-first' as FetchPolicy,
+        children: () => createElement('div'),
+        loaderDelay: 0,
+        withProgress: false,
+      });
+      const preventedFetchElement = createElement(Fetch, {
+        url: 'http://fake-url.com',
+        fetchPolicy: 'cache-first' as FetchPolicy,
+        children: () => createElement('div'),
+        loaderDelay: 0,
+        withProgress: false,
+        preventRequest: true,
+      });
+
+      const renderedFetch = TestRenderer.create(fetchElement);
+      mountedComponents.push(renderedFetch);
+      TestRenderer.create(null);
+
+      setTimeout(() => {
+        renderedFetch.update(preventedFetchElement);
+        TestRenderer.create(null);
+
+        expect(xhrInstance.open.mock.calls.length).toBe(1);
+        expect(xhrInstance.send.mock.calls.length).toBe(1);
+        expect(xhrInstance.abort.mock.calls.length).toBe(1);
+        resolve();
+      }, updateDelay);
+    });
+  });
+
   test('Call onSuccess', () => {
     return new Promise(resolve => {
       const xhrMock = createXhrMock({});

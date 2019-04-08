@@ -44,7 +44,7 @@ function getRequestParams(
 }
 
 function getRequestOptions(options: UseRequestOptions<any>): RequestOptions {
-  const { loaderDelay, withProgress, abortOnUnmount } = options;
+  const { loaderDelay, withProgress, abortOnUnmount = true } = options;
   return {
     loaderDelay,
     withProgress,
@@ -98,7 +98,7 @@ function useRequest<T>(options: UseRequestOptions<T>): ChildrenParams<T> {
 
   useUnmount(() => {
     if (requestRef.current) {
-      const { onSuccess, onError, abortOnUnmount } = options;
+      const { onSuccess, onError, abortOnUnmount = true } = options;
       if (requestRef.current.state.status === 'LOADING' && !abortOnUnmount) {
         if (onSuccess) {
           requestRef.current.addSuccessCallbacks(onSuccess);
