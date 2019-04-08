@@ -18,6 +18,7 @@ function createXhrMock({
     onload = () => undefined;
     onerror = () => undefined;
     onprogress = () => undefined;
+    getAllResponseHeaders = () => '';
 
     open = jest.fn(() => (this.readyState = 1));
 
